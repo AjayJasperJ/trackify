@@ -9,6 +9,7 @@
 		97C147061CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C147051CF9000F007C117D /* Main.storyboard */; };
 		97C147081CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C147071CF9000F007C117D /* LaunchScreen.storyboard */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C808A294A63AB00263BE5 /* RunnerTests.swift */; };
+		97C147EE1CF9000F007C117D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 97C147EE1CF9000F007C117D /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
