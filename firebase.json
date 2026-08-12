@@ -1,0 +1,11 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "android": {
+    "googleServices": "android/app/google-services.json"
+  },
+  "ios": {
+    "googleServices": "ios/Runner/GoogleService-Info.plist"
+  }
+}

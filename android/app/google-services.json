@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "574166626839",
+    "firebase_url": "https://trackify2196-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "trackify2196",
+    "storage_bucket": "trackify2196.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:574166626839:android:cab141c37d7ba1ecc56252",
+        "android_client_info": {
+          "package_name": "com.taskify.jaspr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRT6QH58WWKYSuTsDf7UgOsQKFeiHMSz0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

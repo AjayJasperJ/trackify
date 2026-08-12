@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      // Allow authenticated users to read basic user info (for search)
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      
+      match /tasks/{taskId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /task_records/{dateStr} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /streak/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /public_profile/{document=**} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      match /public_activity/{document=**} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /friends/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /friend_requests/{document=**} {
+        // Only the sender can create a request — otherwise anyone could
+        // forge friend requests from other users' accounts.
+        allow create: if request.auth != null &&
+            request.resource.data.senderId == request.auth.uid;
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
