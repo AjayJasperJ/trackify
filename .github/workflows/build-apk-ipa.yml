@@ -72,15 +72,14 @@ jobs:
           pod install --repo-update
 
       - name: Build iOS (no codesign)
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
       - name: Create unsigned IPA
         run: |
-          mkdir -p build/ios/ipa
-          cd build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
-          zip -r ../../ipa/trackify-unsigned.ipa Payload
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r trackify-unsigned.ipa Payload
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
