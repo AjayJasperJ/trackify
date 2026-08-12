@@ -33,10 +33,10 @@ jobs:
         run: flutter pub get
 
       - name: Generate code (freezed/json_serializable)
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build unsigned APK
-        run: flutter build apk --release --no-codesign
+        run: flutter build apk --release
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -64,7 +64,7 @@ jobs:
         run: flutter pub get
 
       - name: Generate code (freezed/json_serializable)
-        run: dart run build_runner build
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Install CocoaPods
         run: |
