@@ -66,14 +66,6 @@ jobs:
       - name: Generate code (freezed/json_serializable)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Generate Flutter iOS config
-        run: flutter build ios --config-only
-
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install --repo-update
-
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
