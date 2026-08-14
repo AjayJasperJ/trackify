@@ -69,8 +69,10 @@ jobs:
       - name: Clean iOS Pods
         run: |
           cd ios
-          rm -f Podfile.lock
           pod deintegrate || true
+          rm -rf Pods
+          rm -f Podfile
+          rm -f Podfile.lock
 
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
