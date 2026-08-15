@@ -68,8 +68,8 @@ jobs:
 
       - name: Sync CocoaPods (Force Static Linkage)
         run: |
+          flutter build ios --config-only || true
           cd ios
-          rm -f Flutter/Generated.xcconfig || true
           pod install --repo-update
 
       - name: Build iOS (no codesign)
