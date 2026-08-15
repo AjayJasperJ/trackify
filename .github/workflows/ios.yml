@@ -1,0 +1,61 @@
+name: Build IPA STALE
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: 📱 iOS Build (Unsigned IPA)
+    runs-on: macos-latest
+    steps:
+      - name: 📚 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: 🛠️ Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: 🏗️ Build iOS (No Code Sign)
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: 📦 Package Unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/Runner.app
+          zip -r trackify-unsigned.ipa Payload
+          rm -rf Payload
+
+      - name: Delete Previous GitHub Release
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        run: |
+          gh release delete ios-latest --yes --cleanup-tag 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-latest
+          name: "iOS Release - Unsigned IPA (Latest)"
+          body: |
+            ⚠️ **Unsigned IPA** — This build is not signed and cannot be installed directly on a device without re-signing.
+
+            To install:
+            - Use **AltStore**, **Sideloadly**, or **iOS App Installer** to sideload.
+            - Or re-sign with your own certificate using **Xcode** / **codesign**.
+          files: build/ios/ipa/trackify-unsigned.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
