@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,8 +15,12 @@ class TrackifyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     final needsOnboarding = ref.watch(needsOnboardingProvider);
-    final displaysize = MediaQuery.of(context).size.width < 402;
     
+    // Safely get screen width without MediaQuery at the root
+    final view = PlatformDispatcher.instance.implicitView ?? PlatformDispatcher.instance.views.first;
+    final width = view.physicalSize.width / view.devicePixelRatio;
+    final displaysize = width < 402;
+
     Widget app;
     if (authState.isLoading || needsOnboarding.isLoading) {
       app = MaterialApp(
