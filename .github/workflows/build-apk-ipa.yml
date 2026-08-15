@@ -66,13 +66,11 @@ jobs:
       - name: Generate code (freezed/json_serializable)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Clean iOS Pods
+      - name: Sync CocoaPods (Force Static Linkage)
         run: |
           cd ios
-          pod deintegrate || true
-          rm -rf Pods
-          rm -f Podfile
-          rm -f Podfile.lock
+          rm -f Flutter/Generated.xcconfig || true
+          pod install --repo-update
 
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
