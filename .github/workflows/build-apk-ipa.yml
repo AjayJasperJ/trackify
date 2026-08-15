@@ -85,6 +85,9 @@ jobs:
           find build/ios/ipa/Payload/Runner.app -name "*.bundle" -type d -exec find {} -name "PrivacyInfo.xcprivacy" -delete \;
           find build/ios/ipa/Payload/Runner.app -name "_CodeSignature" -exec rm -rf {} +
           
+          chmod +x build/ios/ipa/Payload/Runner.app/Runner
+          find build/ios/ipa/Payload/Runner.app/Frameworks -type f -exec chmod +x {} +
+          
           cd build/ios/ipa
           zip -r trackify-unsigned.ipa Payload
 
