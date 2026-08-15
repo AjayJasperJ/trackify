@@ -55,5 +55,9 @@
 	<string>Trackify sends task reminders and achievement notifications.</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>
