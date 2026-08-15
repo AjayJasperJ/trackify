@@ -1,12 +1,7 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:trackify/app.dart';
-import 'firebase_options.dart';
 
 Future<void> _writeLog(String message) async {
   try {
@@ -19,65 +14,19 @@ Future<void> _writeLog(String message) async {
   }
 }
 
-Future<void> _initCrashLogging() async {
-  try {
-    if (Firebase.apps.isNotEmpty) {
-      // Capture Flutter framework errors + async zone errors.
-      FlutterError.onError = (FlutterErrorDetails details) async {
-        FlutterError.presentError(details);
-        final entry =
-            'FLUTTER_ERROR: ${details.exceptionAsString()}\n${details.stack}';
-        await _writeLog(entry);
-        try {
-          // Best-effort Crashlytics breadcrumb capture.
-          // ignore: avoid_print
-          print(entry);
-        } catch (_) {}
-      };
-
-      PlatformDispatcher.instance.onError = (error, stack) {
-        _writeLog('ASYNC_ERROR: $error\n$stack');
-        return true;
-      };
-
-      await _writeLog(
-        'Crash logging initialized.\n'
-        'OS: ${Platform.operatingSystem}\n'
-        'Version: ${Platform.operatingSystemVersion}\n'
-        'Dart: ${Platform.version}',
-      );
-    } else {
-      await _writeLog('Firebase not initialized; crash logging deferred.');
-    }
-  } catch (e) {
-    await _writeLog('Crash logging init failed: $e');
-  }
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await _writeLog(
-      'APP_STARTED\nOS: ${Platform.operatingSystem}\nOSVersion: ${Platform.operatingSystemVersion}\nDart: ${Platform.version}',
-    );
-  } catch (e) {
-    // ignore
-  }
+  await _writeLog(
+    'APP_STARTED_NO_FIREBASE\nOS: ${Platform.operatingSystem}\nOSVersion: ${Platform.operatingSystemVersion}\nDart: ${Platform.version}',
+  );
 
-  try {
-    _writeLog('App starting...');
-    await _initCrashLogging();
-    _writeLog('Initializing Firebase...');
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
-    _writeLog('Firebase initialized. Running app.');
-    runApp(const ProviderScope(child: TrackifyApp()));
-  } catch (e, stack) {
-    await _writeLog('MAIN_FAIL: $e\n$stack');
-    rethrow;
-  }
+  runApp(
+    MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Trackify Test')),
+        body: const Center(child: Text('No Firebase build')),
+      ),
+    ),
+  );
 }
