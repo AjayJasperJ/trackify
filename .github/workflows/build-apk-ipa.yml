@@ -77,6 +77,12 @@ jobs:
         run: |
           mkdir -p build/ios/ipa/Payload
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          
+          # Strip nested Info.plist and PrivacyInfo to prevent AltStore Sandbox crash
+          find build/ios/ipa/Payload/Runner.app -mindepth 2 -name "Info.plist" -delete
+          find build/ios/ipa/Payload/Runner.app -name "PrivacyInfo.xcprivacy" -delete
+          find build/ios/ipa/Payload/Runner.app -name "_CodeSignature" -exec rm -rf {} +
+          
           cd build/ios/ipa
           zip -r trackify-unsigned.ipa Payload
 
