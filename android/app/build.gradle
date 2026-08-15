@@ -17,7 +17,7 @@ def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '
 def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0'
 
 android {
-    namespace "com.example.trackify"
+    namespace "com.trackify.jaspr"
     compileSdk 34
     ndkVersion flutter.ndkVersion
 
@@ -35,7 +35,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.trackify"
+        applicationId "com.trackify.jaspr"
         minSdk 23
         targetSdk 34
         versionCode flutterVersionCode.toInteger()
