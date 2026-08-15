@@ -16,9 +16,10 @@ class TrackifyApp extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final needsOnboarding = ref.watch(needsOnboardingProvider);
     
-    // Safely get screen width without MediaQuery at the root
-    final view = PlatformDispatcher.instance.implicitView ?? PlatformDispatcher.instance.views.first;
-    final width = view.physicalSize.width / view.devicePixelRatio;
+    // Safely get screen width without MediaQuery at the root, guarding against empty views on launch
+    final dispatcher = PlatformDispatcher.instance;
+    final view = dispatcher.implicitView ?? (dispatcher.views.isNotEmpty ? dispatcher.views.first : null);
+    final width = view != null ? (view.physicalSize.width / view.devicePixelRatio) : 390.0;
     final displaysize = width < 402;
 
     Widget app;
