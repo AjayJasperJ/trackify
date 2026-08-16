@@ -56,6 +56,6 @@ jobs:
             To install:
             - Use **AltStore**, **Sideloadly**, or **iOS App Installer** to sideload.
             - Or re-sign with your own certificate using **Xcode** / **codesign**.
-          files: build/ios/ipa/trackify-unsigned.ipa
+          files: trackify-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
