@@ -1,51 +1,76 @@
-name: Build IPA STALE
+name: Build IPA
 
 on:
   push:
-    branches: [main]
-    tags: ['v*']
+    branches: [master]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   build-ios:
-    name: 📱 iOS Build (Unsigned IPA)
+    name: Build Unsigned IPA
     runs-on: macos-latest
-    steps:
-      - name: 📚 Checkout Code
-        uses: actions/checkout@v4
-        with:
-          lfs: true
+    timeout-minutes: 45
 
-      - name: 🛠️ Setup Flutter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.0'
-          channel: 'stable'
+          channel: stable
           cache: true
 
       - name: Get dependencies
         run: flutter pub get
 
-      - name: 🏗️ Build iOS (No Code Sign)
-        run: |
-          flutter build ios --release --no-codesign
+      - name: Generate code (freezed/json_serializable)
+        run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: 📦 Package Unsigned IPA
+      - name: Sync CocoaPods (Force Static Linkage)
         run: |
-          mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/Runner.app
+          flutter build ios --config-only || true
+          cd ios
+          pod install --repo-update
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign --verbose
+
+      - name: Create unsigned IPA
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          
+          # Strip nested Info.plist and PrivacyInfo ONLY from .bundle directories to prevent AltStore Sandbox crash
+          find build/ios/ipa/Payload/Runner.app -name "*.bundle" -type d -exec find {} -name "Info.plist" -delete \;
+          find build/ios/ipa/Payload/Runner.app -name "*.bundle" -type d -exec find {} -name "PrivacyInfo.xcprivacy" -delete \;
+          find build/ios/ipa/Payload/Runner.app -name "_CodeSignature" -exec rm -rf {} +
+          
+          # Preserve execute permissions before zipping
+          chmod +x build/ios/ipa/Payload/Runner.app/Runner
+          find build/ios/ipa/Payload/Runner.app/Frameworks -type f -exec chmod +x {} +
+          
+          cd build/ios/ipa
           zip -r trackify-unsigned.ipa Payload
-          rm -rf Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackify-ipa-unsigned
+          path: build/ios/ipa/trackify-unsigned.ipa
+          retention-days: 30
 
       - name: Delete Previous GitHub Release
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
         run: |
           gh release delete ios-latest --yes --cleanup-tag 2>/dev/null || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
-        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ios-latest
@@ -56,6 +81,6 @@ jobs:
             To install:
             - Use **AltStore**, **Sideloadly**, or **iOS App Installer** to sideload.
             - Or re-sign with your own certificate using **Xcode** / **codesign**.
-          files: trackify-unsigned.ipa
+          files: build/ios/ipa/trackify-unsigned.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
