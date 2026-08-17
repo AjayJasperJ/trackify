@@ -67,27 +67,15 @@ Future<void> main() async {
 
   try {
     _writeLog('App starting...');
-    // Temporarily disabling crash logging for isolation
-    // await _initCrashLogging();
+    await _initCrashLogging();
     _writeLog('Initializing Firebase...');
     if (Firebase.apps.isEmpty) {
-      // Temporarily disabling Firebase initialization for isolation
-      // await Firebase.initializeApp(
-      //   options: DefaultFirebaseOptions.currentPlatform,
-      // );
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
     }
     _writeLog('Firebase initialized. Running app.');
-    // Simplify root app for testing
-    runApp(
-      const MaterialApp(
-        home: Scaffold(
-          backgroundColor: Colors.white,
-          body: Center(
-              child: Text('Startup Successful',
-                  style: TextStyle(fontSize: 24))),
-        ),
-      ),
-    );
+    runApp(const ProviderScope(child: TrackifyApp()));
   } catch (e, stack) {
     await _writeLog('MAIN_FAIL: $e\n$stack');
     rethrow;
