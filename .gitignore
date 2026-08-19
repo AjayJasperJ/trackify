@@ -46,3 +46,4 @@ app.*.map.json
 
 # Node (project scripts only)
 node_modules/
+openclaw-workspace-state.json

@@ -104,7 +104,7 @@ class ProgressionRepositoryImpl implements ProgressionRepository {
   }
 
   @override
-  Future<List<XPHistoryEntity>> getXPHistoryForTask(String uid, String taskId) async {
+  Future<int> revertAllTaskXP(String uid, String taskId) async {
     try {
       final query = await _firestore
           .collection('users')
@@ -114,30 +114,33 @@ class ProgressionRepositoryImpl implements ProgressionRepository {
           .get();
 
       if (query.docs.isEmpty) {
-        return [];
+        return 0;
       }
 
-      final docs = query.docs.toList();
-      return docs.map((doc) => XPHistoryEntity.fromMap(doc.data(), doc.id)).toList();
+      int totalXp = 0;
+      final batch = _firestore.batch();
+      
+      for (var doc in query.docs) {
+        final data = doc.data();
+        final dynamic xpRaw = data['totalXP'];
+        int xp = 0;
+        if (xpRaw is int) {
+          xp = xpRaw;
+        } else if (xpRaw is double) {
+          xp = xpRaw.toInt();
+        } else if (xpRaw is String) {
+          xp = int.tryParse(xpRaw) ?? 0;
+        }
+        totalXp += xp;
+        batch.delete(doc.reference);
+      }
+      
+      await batch.commit();
+      return totalXp;
     } catch (e) {
       // ignore: avoid_print
-      print('Error getting XP history for task: $e');
-      return [];
+      print('Error reverting all task XP: $e');
+      return 0;
     }
-  }
-
-  @override
-  Future<void> deleteXPHistoryEntries(String uid, List<String> historyIds) async {
-    if (historyIds.isEmpty) return;
-    final batch = _firestore.batch();
-    for (final id in historyIds) {
-      final docRef = _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('xp_history')
-          .doc(id);
-      batch.delete(docRef);
-    }
-    await batch.commit();
   }
 }

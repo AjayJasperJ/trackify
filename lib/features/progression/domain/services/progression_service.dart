@@ -210,6 +210,42 @@ class ProgressionService {
     return xpToRevert;
   }
 
+  Future<int> revertTaskDeletionXP({
+    required String uid,
+    required String taskId,
+  }) async {
+    final xpToRevert = await repository.revertAllTaskXP(uid, taskId);
+    if (xpToRevert <= 0) return 0;
+
+    ProgressionEntity? progression = await repository.getProgression(uid);
+    if (progression == null) return 0;
+
+    int newLevelXP = progression.currentXP - xpToRevert;
+    int newLevel = progression.currentLevel;
+    
+    while (newLevelXP < 0 && newLevel > 1) {
+      newLevel -= 1;
+      newLevelXP += getRequiredXP(newLevel);
+    }
+    
+    if (newLevelXP < 0) {
+      newLevelXP = 0; // Just in case
+    }
+
+    final updatedProgression = progression.copyWith(
+      currentLevel: newLevel,
+      currentXP: newLevelXP,
+      requiredXP: getRequiredXP(newLevel),
+      lifetimeXP: max(0, progression.lifetimeXP - xpToRevert),
+      todayXP: max(0, progression.todayXP - xpToRevert),
+      todayXPRemaining: min(250, progression.todayXPRemaining + xpToRevert),
+      updatedAt: DateTime.now(),
+    );
+
+    await repository.updateProgression(uid, updatedProgression);
+    return xpToRevert;
+  }
+
   Future<int> awardCustomXP(
       String uid, String reason, int amount, String date) async {
     ProgressionEntity progression = await repository.getProgression(uid) ??
