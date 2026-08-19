@@ -8,4 +8,6 @@ abstract class ProgressionRepository {
   Stream<ProgressionEntity?> watchProgression(String uid);
   Stream<List<XPHistoryEntity>> watchXPHistory(String uid, {int limit = 50});
   Future<int?> revertRecentTaskXP(String uid, String taskId, String date);
+  Future<List<XPHistoryEntity>> getXPHistoryForTask(String uid, String taskId);
+  Future<void> deleteXPHistoryEntries(String uid, List<String> historyIds);
 }

@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_initializing_formals
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import '../../../goals/domain/entities/goal_entity.dart';
 import '../../../goals/domain/entities/milestone_entity.dart';
@@ -36,6 +36,10 @@ class AddTaskController extends ChangeNotifier {
   MilestoneEntity? selectedMilestone;
   String? currentGoalId;
   String? currentMilestoneId;
+  TaskTrackingMode trackingMode;
+  int? expectedDurationMinutes;
+  TimeOfDay? startTimeOfDay;
+  TimeOfDay? endTimeOfDay;
   bool isLoading;
 
   AddTaskController({
@@ -75,6 +79,10 @@ class AddTaskController extends ChangeNotifier {
         subtasks = taskToEdit?.subtasks.toList() ?? [],
         selectedGoal = initialGoal,
         currentGoalId = initialGoal?.goalId,
+        trackingMode = taskToEdit?.trackingMode ?? TaskTrackingMode.none,
+        expectedDurationMinutes = taskToEdit?.expectedDurationMinutes,
+        startTimeOfDay = _parseTimeOfDay(taskToEdit?.startTimeOfDay),
+        endTimeOfDay = _parseTimeOfDay(taskToEdit?.endTimeOfDay),
         isLoading = false,
         taskId = taskToEdit?.taskId ??
             FirebaseFirestore.instance.collection('tasks').doc().id,
@@ -228,6 +236,26 @@ class AddTaskController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTrackingMode(TaskTrackingMode mode) {
+    trackingMode = mode;
+    notifyListeners();
+  }
+
+  void setExpectedDurationMinutes(int? minutes) {
+    expectedDurationMinutes = minutes;
+    notifyListeners();
+  }
+
+  void setStartTimeOfDay(TimeOfDay? time) {
+    startTimeOfDay = time;
+    notifyListeners();
+  }
+
+  void setEndTimeOfDay(TimeOfDay? time) {
+    endTimeOfDay = time;
+    notifyListeners();
+  }
+
   void setLoading(bool v) {
     isLoading = v;
     notifyListeners();
@@ -275,6 +303,10 @@ class AddTaskController extends ChangeNotifier {
       updatedAt: now,
       goalId: selectedGoal?.goalId,
       milestoneId: selectedMilestone?.milestoneId,
+      trackingMode: trackingMode,
+      expectedDurationMinutes: trackingMode == TaskTrackingMode.timer ? expectedDurationMinutes : null,
+      startTimeOfDay: _formatTimeOfDay(startTimeOfDay),
+      endTimeOfDay: _formatTimeOfDay(endTimeOfDay),
     );
 
     if (isEditing) {
@@ -324,5 +356,19 @@ class AddTaskController extends ChangeNotifier {
       case ScheduleType.oneTime:
         return const OneTimeScheduleEntity();
     }
+  }
+
+  static TimeOfDay? _parseTimeOfDay(String? val) {
+    if (val == null || !val.contains(':')) return null;
+    final parts = val.split(':');
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return TimeOfDay(hour: h, minute: m);
+  }
+
+  static String? _formatTimeOfDay(TimeOfDay? time) {
+    if (time == null) return null;
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }

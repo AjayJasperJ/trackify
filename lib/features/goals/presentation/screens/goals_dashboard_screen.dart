@@ -105,7 +105,7 @@ class _GoalsDashboardScreenState extends ConsumerState<GoalsDashboardScreen> {
                             return goal.archived;
                           }
                         }).toList();
-    
+
                         return _buildGoalsGrid(filteredGoals);
                       },
                       loading: () =>

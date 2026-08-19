@@ -255,5 +255,55 @@ class ProgressionService {
     return amount;
   }
 
+  /// Reverts all XP earned from a specific task (across all dates).
+  /// Used when a task is permanently deleted.
+  Future<int> revertTaskDeletionXP({
+    required String uid,
+    required String taskId,
+  }) async {
+    final xpHistoryEntries = await repository.getXPHistoryForTask(uid, taskId);
+    if (xpHistoryEntries.isEmpty) return 0;
+
+    int totalXPToRevert = 0;
+    final historyIdsToDelete = <String>[];
+    for (final entry in xpHistoryEntries) {
+      totalXPToRevert += entry.totalXP;
+      historyIdsToDelete.add(entry.historyId);
+    }
+
+    if (totalXPToRevert <= 0) return 0;
+
+    // Delete all XP history entries for this task
+    await repository.deleteXPHistoryEntries(uid, historyIdsToDelete);
+
+    ProgressionEntity? progression = await repository.getProgression(uid);
+    if (progression == null) return 0;
+
+    int newLevelXP = progression.currentXP - totalXPToRevert;
+    int newLevel = progression.currentLevel;
+    
+    while (newLevelXP < 0 && newLevel > 1) {
+      newLevel -= 1;
+      newLevelXP += getRequiredXP(newLevel);
+    }
+    
+    if (newLevelXP < 0) {
+      newLevelXP = 0;
+    }
+
+    final updatedProgression = progression.copyWith(
+      currentLevel: newLevel,
+      currentXP: newLevelXP,
+      requiredXP: getRequiredXP(newLevel),
+      lifetimeXP: max(0, progression.lifetimeXP - totalXPToRevert),
+      todayXP: max(0, progression.todayXP - totalXPToRevert),
+      todayXPRemaining: min(250, progression.todayXPRemaining + totalXPToRevert),
+      updatedAt: DateTime.now(),
+    );
+
+    await repository.updateProgression(uid, updatedProgression);
+    return totalXPToRevert;
+  }
+
   // Future feature: process streaks, perfect day, weekly bonus etc.
 }

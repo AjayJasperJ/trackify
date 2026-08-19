@@ -15,6 +15,7 @@ import 'package:trackify/widgets/form_section_card.dart';
 import 'add_task_widgets/add_task_header.dart';
 import 'add_task_widgets/add_task_info_card.dart';
 import 'add_task_widgets/add_task_schedule_card.dart';
+import 'add_task_widgets/add_task_tracking_card.dart';
 import 'add_task_widgets/add_task_subtasks_card.dart';
 import 'add_task_widgets/add_task_link_goal_card.dart';
 import 'package:trackify/features/goals/domain/entities/milestone_entity.dart';
@@ -227,6 +228,17 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                             onSelectStartDate: () => _selectDate(context, true),
                             onSelectEndDate: () => _selectDate(context, false),
                             onAddYearlyDate: _addYearlyDate,
+                          ),
+                          const SizedBox(height: 24),
+                          AddTaskTrackingCard(
+                            trackingMode: _controller.trackingMode,
+                            expectedDurationMinutes: _controller.expectedDurationMinutes,
+                            startTimeOfDay: _controller.startTimeOfDay,
+                            endTimeOfDay: _controller.endTimeOfDay,
+                            onTrackingModeChanged: _controller.setTrackingMode,
+                            onExpectedDurationChanged: _controller.setExpectedDurationMinutes,
+                            onStartTimeChanged: _controller.setStartTimeOfDay,
+                            onEndTimeChanged: _controller.setEndTimeOfDay,
                           ),
                           const SizedBox(height: 24),
                           Consumer(

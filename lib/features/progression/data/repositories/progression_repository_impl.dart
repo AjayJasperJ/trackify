@@ -102,4 +102,42 @@ class ProgressionRepositoryImpl implements ProgressionRepository {
       return null;
     }
   }
+
+  @override
+  Future<List<XPHistoryEntity>> getXPHistoryForTask(String uid, String taskId) async {
+    try {
+      final query = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('xp_history')
+          .where('taskId', isEqualTo: taskId)
+          .get();
+
+      if (query.docs.isEmpty) {
+        return [];
+      }
+
+      final docs = query.docs.toList();
+      return docs.map((doc) => XPHistoryEntity.fromMap(doc.data(), doc.id)).toList();
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error getting XP history for task: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<void> deleteXPHistoryEntries(String uid, List<String> historyIds) async {
+    if (historyIds.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final id in historyIds) {
+      final docRef = _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('xp_history')
+          .doc(id);
+      batch.delete(docRef);
+    }
+    await batch.commit();
+  }
 }

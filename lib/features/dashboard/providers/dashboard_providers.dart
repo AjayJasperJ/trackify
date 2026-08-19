@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../progression/providers/progression_providers.dart';
 
 import '../data/repositories/streak_repository_impl.dart';
 import '../../task/data/repositories/task_record_repository_impl.dart';
@@ -14,7 +15,10 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
 });
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
-  return TaskRepositoryImpl(ref.watch(firestoreProvider));
+  return TaskRepositoryImpl(
+    ref.watch(firestoreProvider),
+    progressionService: ref.watch(progressionServiceProvider),
+  );
 });
 
 final taskRecordRepositoryProvider = Provider<TaskRecordRepository>((ref) {

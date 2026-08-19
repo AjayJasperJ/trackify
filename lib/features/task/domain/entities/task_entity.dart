@@ -4,6 +4,8 @@ import 'schedule_entity.dart';
 import 'subtask_entity.dart';
 import 'task_size.dart';
 
+enum TaskTrackingMode { none, timer }
+
 class TaskEntity {
   final String taskId;
   final String title;
@@ -19,6 +21,10 @@ class TaskEntity {
   final bool isArchived;
   final String? goalId;
   final String? milestoneId;
+  final TaskTrackingMode trackingMode;
+  final int? expectedDurationMinutes;
+  final String? startTimeOfDay;
+  final String? endTimeOfDay;
 
   /// The linked goal's target date / milestone's deadline — resolved by
   /// providers (task_state_providers) from the goals/milestones streams.
@@ -43,6 +49,10 @@ class TaskEntity {
     this.isArchived = false,
     this.goalId,
     this.milestoneId,
+    this.trackingMode = TaskTrackingMode.none,
+    this.expectedDurationMinutes,
+    this.startTimeOfDay,
+    this.endTimeOfDay,
   });
 
   /// Effective expiry for a linked task:
@@ -72,6 +82,12 @@ class TaskEntity {
   }
 
   factory TaskEntity.fromMap(Map<String, dynamic> map, String id) {
+    TaskTrackingMode parseTrackingMode(dynamic val) {
+      final str = ModelParse.toStr(val);
+      if (str == 'timer') return TaskTrackingMode.timer;
+      return TaskTrackingMode.none;
+    }
+
     return TaskEntity(
       taskId: id,
       title: ModelParse.toStr(map['title']),
@@ -111,6 +127,16 @@ class TaskEntity {
       isArchived: ModelParse.toBool(map['isArchived']),
       goalId: map['goalId'] as String?,
       milestoneId: map['milestoneId'] as String?,
+      trackingMode: parseTrackingMode(map['trackingMode']),
+      expectedDurationMinutes: map['expectedDurationMinutes'] != null
+          ? ModelParse.toInt(map['expectedDurationMinutes'])
+          : null,
+      startTimeOfDay: map['startTimeOfDay'] != null
+          ? ModelParse.toStr(map['startTimeOfDay'])
+          : null,
+      endTimeOfDay: map['endTimeOfDay'] != null
+          ? ModelParse.toStr(map['endTimeOfDay'])
+          : null,
     );
   }
 
@@ -129,6 +155,10 @@ class TaskEntity {
       'isArchived': isArchived,
       'goalId': goalId,
       'milestoneId': milestoneId,
+      'trackingMode': trackingMode.name,
+      'expectedDurationMinutes': expectedDurationMinutes,
+      'startTimeOfDay': startTimeOfDay,
+      'endTimeOfDay': endTimeOfDay,
     };
   }
 
@@ -147,6 +177,10 @@ class TaskEntity {
     bool? isArchived,
     String? goalId,
     String? milestoneId,
+    TaskTrackingMode? trackingMode,
+    int? expectedDurationMinutes,
+    String? startTimeOfDay,
+    String? endTimeOfDay,
   }) {
     return TaskEntity(
       taskId: taskId ?? this.taskId,
@@ -163,6 +197,10 @@ class TaskEntity {
       isArchived: isArchived ?? this.isArchived,
       goalId: goalId ?? this.goalId,
       milestoneId: milestoneId ?? this.milestoneId,
+      trackingMode: trackingMode ?? this.trackingMode,
+      expectedDurationMinutes: expectedDurationMinutes ?? this.expectedDurationMinutes,
+      startTimeOfDay: startTimeOfDay ?? this.startTimeOfDay,
+      endTimeOfDay: endTimeOfDay ?? this.endTimeOfDay,
     );
   }
 }
