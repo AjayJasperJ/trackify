@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/achievement_card.dart';
 import '../widgets/badge_card.dart';
 import '../../providers/achievement_providers.dart';
+import '../../../authentication/providers/auth_provider.dart';
 
 class ProfileAchievementsScreen extends ConsumerWidget {
   final String userId;
@@ -13,6 +14,7 @@ class ProfileAchievementsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final achievementsAsync = ref.watch(userAchievementsStreamProvider);
     final badgesAsync = ref.watch(userBadgesStreamProvider);
+    final user = ref.watch(currentUserProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -32,14 +34,37 @@ class ProfileAchievementsScreen extends ConsumerWidget {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: theme.colorScheme.primaryContainer,
-                    child: Icon(Icons.person, size: 48, color: theme.colorScheme.onPrimaryContainer),
+                    child: Icon(
+                      Icons.person,
+                      size: 48,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
                   ),
                   const SizedBox(height: 16),
+                  if (user?.displayName != null &&
+                      user!.displayName!.isNotEmpty)
+                    Text(
+                      user.displayName!,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  if (user?.email != null)
+                    Text(
+                      user!.email!,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
                   Text(
                     'User ID: $userId',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   Text(
                     'Level 15 • 12,500 XP',
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -53,10 +78,15 @@ class ProfileAchievementsScreen extends ConsumerWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Text(
                 'Featured Badges',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -65,7 +95,10 @@ class ProfileAchievementsScreen extends ConsumerWidget {
               if (badges.isEmpty) {
                 return const SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     child: Text('No badges to display.'),
                   ),
                 );
@@ -88,46 +121,61 @@ class ProfileAchievementsScreen extends ConsumerWidget {
                 ),
               );
             },
-            loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-            error: (e, st) => SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
+            loading: () => const SliverToBoxAdapter(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, st) =>
+                SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
           ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 'Recent Achievements',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
           achievementsAsync.when(
             data: (achievements) {
               final completed = achievements.where((a) => a.completed).toList()
-                ..sort((a, b) => (b.completedAt ?? DateTime.now()).compareTo(a.completedAt ?? DateTime.now()));
+                ..sort(
+                  (a, b) => (b.completedAt ?? DateTime.now()).compareTo(
+                    a.completedAt ?? DateTime.now(),
+                  ),
+                );
 
               if (completed.isEmpty) {
                 return const SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
                     child: Text('No recent achievements.'),
                   ),
                 );
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      child: AchievementCard(achievement: completed[index]),
-                    );
-                  },
-                  childCount: completed.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: AchievementCard(achievement: completed[index]),
+                  );
+                }, childCount: completed.length),
               );
             },
-            loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-            error: (e, st) => SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
+            loading: () => const SliverToBoxAdapter(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, st) =>
+                SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
           ),
         ],
       ),
