@@ -9,6 +9,8 @@ class ViewTaskHeader extends StatelessWidget {
   final Color onSurface;
   final Color onSurfaceVariant;
   final Color surfaceContainerHigh;
+  final bool isCompleted;
+  final ValueChanged<bool> onToggle;
 
   const ViewTaskHeader({
     super.key,
@@ -18,6 +20,8 @@ class ViewTaskHeader extends StatelessWidget {
     required this.onSurface,
     required this.onSurfaceVariant,
     required this.surfaceContainerHigh,
+    required this.isCompleted,
+    required this.onToggle,
   });
 
   @override
@@ -39,19 +43,19 @@ class ViewTaskHeader extends StatelessWidget {
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: primary,
+                          color: isCompleted ? Colors.grey : primary,
                           shape: BoxShape.circle,
                         ),
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      task.category?.toUpperCase() ?? 'IN PROGRESS',
+                      isCompleted ? 'COMPLETED' : (task.category?.toUpperCase() ?? 'IN PROGRESS'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.6,
-                        color: primary,
+                        color: isCompleted ? Colors.grey : primary,
                       ),
                     ),
                   ],
@@ -62,7 +66,8 @@ class ViewTaskHeader extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
-                    color: onSurface,
+                    color: isCompleted ? Colors.grey : onSurface,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
                     height: 1.2,
                   ),
                 ),
@@ -71,7 +76,11 @@ class ViewTaskHeader extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     task.description!,
-                    style: TextStyle(fontSize: 14, color: onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 14, 
+                      color: isCompleted ? Colors.grey : onSurfaceVariant,
+                      decoration: isCompleted ? TextDecoration.lineThrough : null,
+                    ),
                   ),
                 ],
               ],
@@ -81,6 +90,8 @@ class ViewTaskHeader extends StatelessWidget {
           ParticleBurstButton(
             primaryColor: primary,
             surfaceContainerHighColor: surfaceContainerHigh,
+            isCompleted: isCompleted,
+            onChanged: onToggle,
           ),
         ],
       ),
@@ -91,11 +102,15 @@ class ViewTaskHeader extends StatelessWidget {
 class ParticleBurstButton extends StatefulWidget {
   final Color primaryColor;
   final Color surfaceContainerHighColor;
+  final bool isCompleted;
+  final ValueChanged<bool> onChanged;
 
   const ParticleBurstButton({
     super.key,
     required this.primaryColor,
     required this.surfaceContainerHighColor,
+    required this.isCompleted,
+    required this.onChanged,
   });
 
   @override
@@ -104,7 +119,6 @@ class ParticleBurstButton extends StatefulWidget {
 
 class _ParticleBurstButtonState extends State<ParticleBurstButton>
     with TickerProviderStateMixin {
-  bool isCompleted = false;
   bool isPressed = false;
 
   final List<_Particle> particles = [];
@@ -127,8 +141,8 @@ class _ParticleBurstButtonState extends State<ParticleBurstButton>
   }
 
   void _triggerBurst() {
-    setState(() => isCompleted = !isCompleted);
-    if (isCompleted) {
+    widget.onChanged(!widget.isCompleted);
+    if (!widget.isCompleted) { // That means we are transitioning to true
       particles.clear();
       final random = math.Random();
       for (int i = 0; i < 8; i++) {
@@ -187,7 +201,7 @@ class _ParticleBurstButtonState extends State<ParticleBurstButton>
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isCompleted
+                color: widget.isCompleted
                     ? widget.primaryColor
                     : widget.surfaceContainerHighColor,
                 boxShadow: [
@@ -200,8 +214,8 @@ class _ParticleBurstButtonState extends State<ParticleBurstButton>
               ),
               child: Center(
                 child: Icon(
-                  isCompleted ? Icons.task_alt : Icons.check_circle,
-                  color: isCompleted ? Colors.white : widget.primaryColor,
+                  widget.isCompleted ? Icons.task_alt : Icons.check_circle,
+                  color: widget.isCompleted ? Colors.white : widget.primaryColor,
                   size: 28,
                 ),
               ),

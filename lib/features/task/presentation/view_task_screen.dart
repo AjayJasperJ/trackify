@@ -58,6 +58,28 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
     'Excellent',
   ];
 
+  Future<void> _toggleTaskCompletion(bool isCompleted) async {
+    final user = ref.read(currentUserProvider);
+    final task = _task;
+    if (user == null || task == null) return;
+    try {
+      await ref.read(taskRecordRepositoryProvider).toggleTaskCompletion(
+            user.uid,
+            ref.read(currentDateStringProvider),
+            task,
+            isCompleted,
+          );
+      // Refresh heatmap data since consistency might have changed
+      _loadHeatmapData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update task: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _saveReflection(int moodIndex, String note) async {
     final user = ref.read(currentUserProvider);
     final task = _task;
@@ -256,6 +278,8 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                   onSurface: onSurface,
                   onSurfaceVariant: onSurfaceVariant,
                   surfaceContainerHigh: surfaceContainerHigh,
+                  isCompleted: isCompleted,
+                  onToggle: _toggleTaskCompletion,
                 ),
                 ViewTaskBentoStats(
                   task: task,
