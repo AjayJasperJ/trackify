@@ -135,18 +135,35 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
       // is nothing to attach a reflection to — no-op.
       if (!snapshot.exists || snapshot.data() == null) return;
 
-      // Only the reflection part of the completion entry is updated.
+      final data = snapshot.data() as Map<String, dynamic>;
+      final completedTasks = data['completedTasks'] as Map<String, dynamic>? ?? {};
+
+      final taskEntry = completedTasks[taskId];
+      if (taskEntry is Map) {
+        final updatedEntry = Map<String, dynamic>.from(taskEntry);
+        updatedEntry['reflection'] = reflection.toMap();
+        completedTasks[taskId] = updatedEntry;
+      } else {
+        completedTasks[taskId] = {
+          'taskId': taskId,
+          'completed': taskEntry == true,
+          'reflection': reflection.toMap(),
+        };
+      }
+
+      // Update the whole completedTasks map to prevent path-related FieldPath exceptions
       transaction.update(docRef, {
-        'completedTasks.$taskId.reflection': reflection.toMap(),
+        'completedTasks': completedTasks,
       });
 
       // Keep the public activity mood in sync.
       final publicActivitySnapshot = await transaction.get(publicActivityRef);
       if (publicActivitySnapshot.exists &&
           publicActivitySnapshot.data() != null) {
+        final publicData = publicActivitySnapshot.data() as Map<String, dynamic>;
         final publicTasks =
-            List.from(publicActivitySnapshot.data()!['completedTasks'] ?? []);
-        final idx = publicTasks.indexWhere((t) => t['taskId'] == taskId);
+            List.from(publicData['completedTasks'] ?? []);
+        final idx = publicTasks.indexWhere((t) => t is Map && t['taskId'] == taskId);
         if (idx != -1) {
           publicTasks[idx] = {
             ...publicTasks[idx] as Map,
