@@ -136,7 +136,7 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
       if (!snapshot.exists || snapshot.data() == null) return;
 
       final data = snapshot.data() as Map<String, dynamic>;
-      final completedTasks = data['completedTasks'] as Map<String, dynamic>? ?? {};
+      final completedTasks = Map<String, dynamic>.from(data['completedTasks'] as Map? ?? {});
 
       final taskEntry = completedTasks[taskId];
       if (taskEntry is Map) {
