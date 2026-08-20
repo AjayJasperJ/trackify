@@ -63,7 +63,7 @@ class HeatMapCalendar extends StatelessWidget {
                 }
                 
                 return Tooltip(
-                  message: '\${date.month}/\${date.day}: \$intensity completions',
+                  message: '${date.month}/${date.day}: $intensity completions',
                   child: Container(
                     decoration: BoxDecoration(
                       color: blockColor,

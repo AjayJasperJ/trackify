@@ -241,6 +241,12 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                 ViewTaskMoodAndNotes(
                   enabled: moodEnabled,
                   saving: _savingReflection,
+                  initialMoodIndex: () {
+                    final idx = _moodLevels.indexOf(
+                        todayRecord?.completedTasks[task.taskId]?.reflection?.level ?? 'Normal');
+                    return idx >= 0 ? idx : 2;
+                  }(),
+                  initialNote: todayRecord?.completedTasks[task.taskId]?.reflection?.note ?? '',
                   onSave: (moodIndex, note) => _saveReflection(moodIndex, note),
                   onSurface: onSurface,
                   surfaceContainerLow: surfaceContainerLow,

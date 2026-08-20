@@ -108,7 +108,7 @@ class _AllTasksInteractiveListTaskItemState
       builder: (context) => AlertDialog(
         title: const Text('Delete Task'),
         content: Text(
-          'Are you sure you want to delete "\${widget.task.title}"?',
+          'Are you sure you want to delete "${widget.task.title}"?',
         ),
         actions: [
           TextButton(
@@ -151,7 +151,7 @@ class _AllTasksInteractiveListTaskItemState
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        context.push('/view-task/\${widget.task.taskId}', extra: widget.task);
+        context.push('/view-task/${widget.task.taskId}', extra: widget.task);
       },
       onLongPressStart: (details) {
         showMenu(

@@ -78,7 +78,7 @@ class MoodAnalysisCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Avg Score: \${averageMood.toStringAsFixed(1)} / 5.0',
+                      'Avg Score: ${averageMood.toStringAsFixed(1)} / 5.0',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],

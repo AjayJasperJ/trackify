@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 class ViewTaskMoodAndNotes extends StatefulWidget {
   final bool enabled;
   final bool saving;
+  final int initialMoodIndex;
+  final String initialNote;
   final Color onSurface;
   final Color surfaceContainerLow;
   final Color primary;
@@ -13,6 +15,8 @@ class ViewTaskMoodAndNotes extends StatefulWidget {
     super.key,
     this.enabled = true,
     this.saving = false,
+    this.initialMoodIndex = 2,
+    this.initialNote = '',
     required this.onSurface,
     required this.surfaceContainerLow,
     required this.primary,
@@ -25,9 +29,16 @@ class ViewTaskMoodAndNotes extends StatefulWidget {
 }
 
 class _ViewTaskMoodAndNotesState extends State<ViewTaskMoodAndNotes> {
-  int _selectedMoodIndex = 2; // default to neutral
+  late int _selectedMoodIndex;
   final List<String> emojis = ['😫', '😕', '😐', '😊', '🤩'];
-  final TextEditingController _noteController = TextEditingController();
+  late final TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMoodIndex = widget.initialMoodIndex;
+    _noteController = TextEditingController(text: widget.initialNote);
+  }
 
   @override
   void dispose() {
