@@ -187,18 +187,13 @@ class _MilestoneEditorScreenState extends ConsumerState<MilestoneEditorScreen> {
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: DashboardAppBar(
-                      title: isEditing
-                          ? 'Edit Milestone'
-                          : 'Add Milestone',
-                      topPadding: topPadding,
-                      isInnerScreen: true,
-                      showAvatar: false,
-                    ),
+                  DashboardAppBar(
+                    title: isEditing
+                        ? 'Edit Milestone'
+                        : 'Add Milestone',
+                    topPadding: topPadding,
+                    isInnerScreen: true,
+                    showAvatar: false,
                   ),
                   Positioned(
                     bottom: 0,

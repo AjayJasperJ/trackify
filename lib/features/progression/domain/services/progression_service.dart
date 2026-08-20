@@ -55,20 +55,19 @@ class ProgressionService {
     required int completedSubtasks,
     bool isFirstTaskOfDay = false,
   }) async {
-    ProgressionEntity progression = await repository.getProgression(uid) ?? 
+    ProgressionEntity progression =
+        await repository.getProgression(uid) ??
         ProgressionEntity(updatedAt: DateTime.now());
 
     // Reset daily stats if it's a new day
     final now = DateTime.now();
-    bool isNewDay = progression.lastCompletedDate == null || 
+    bool isNewDay =
+        progression.lastCompletedDate == null ||
         now.difference(progression.lastCompletedDate!).inDays > 0 ||
         now.day != progression.lastCompletedDate!.day;
 
     if (isNewDay) {
-      progression = progression.copyWith(
-        todayXP: 0,
-        todayXPRemaining: 250,
-      );
+      progression = progression.copyWith(todayXP: 0, todayXPRemaining: 250);
     }
 
     double totalGeneratedXP = 0;
@@ -124,10 +123,10 @@ class ProgressionService {
     if (actualAwardedXP == 0) {
       // Nothing to do if cap exceeded entirely and no XP awarded
       // Still need to update last completed date
-      await repository.updateProgression(uid, progression.copyWith(
-        lastCompletedDate: now,
-        updatedAt: now,
-      ));
+      await repository.updateProgression(
+        uid,
+        progression.copyWith(lastCompletedDate: now, updatedAt: now),
+      );
       return actualAwardedXP;
     }
 
@@ -158,7 +157,8 @@ class ProgressionService {
     // Save history
     final history = XPHistoryEntity(
       historyId: '', // Set by repo
-      date: "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}",
+      date:
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}",
       taskId: taskId,
       source: 'task_completion',
       baseXP: baseXP,
@@ -169,7 +169,7 @@ class ProgressionService {
     );
 
     await repository.addXPHistory(uid, history);
-    
+
     return actualAwardedXP;
   }
 
@@ -186,12 +186,12 @@ class ProgressionService {
 
     int newLevelXP = progression.currentXP - xpToRevert;
     int newLevel = progression.currentLevel;
-    
+
     while (newLevelXP < 0 && newLevel > 1) {
       newLevel -= 1;
       newLevelXP += getRequiredXP(newLevel);
     }
-    
+
     if (newLevelXP < 0) {
       newLevelXP = 0; // Just in case
     }
@@ -222,12 +222,12 @@ class ProgressionService {
 
     int newLevelXP = progression.currentXP - xpToRevert;
     int newLevel = progression.currentLevel;
-    
+
     while (newLevelXP < 0 && newLevel > 1) {
       newLevel -= 1;
       newLevelXP += getRequiredXP(newLevel);
     }
-    
+
     if (newLevelXP < 0) {
       newLevelXP = 0; // Just in case
     }
@@ -247,8 +247,13 @@ class ProgressionService {
   }
 
   Future<int> awardCustomXP(
-      String uid, String reason, int amount, String date) async {
-    ProgressionEntity progression = await repository.getProgression(uid) ??
+    String uid,
+    String reason,
+    int amount,
+    String date,
+  ) async {
+    ProgressionEntity progression =
+        await repository.getProgression(uid) ??
         ProgressionEntity(updatedAt: DateTime.now());
 
     final now = DateTime.now();
@@ -268,13 +273,10 @@ class ProgressionService {
       currentXP: newLevelXP,
       requiredXP: requiredXPForNextLevel,
       lifetimeXP: progression.lifetimeXP + amount,
-      // We don't add goal/milestone XP to todayXP to avoid capping task XP.
       updatedAt: now,
     );
 
     await repository.updateProgression(uid, updatedProgression);
-
-    // Save history
     final history = XPHistoryEntity(
       historyId: '', // Set by repo
       date: date,
@@ -290,7 +292,4 @@ class ProgressionService {
     await repository.addXPHistory(uid, history);
     return amount;
   }
-
-
-  // Future feature: process streaks, perfect day, weekly bonus etc.
 }

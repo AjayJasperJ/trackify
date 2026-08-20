@@ -299,18 +299,13 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                   ),
 
                   // Top Header (Blurred)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: DashboardAppBar(
-                      title: _controller.isEditing
-                          ? 'Edit Task'
-                          : 'Create Task',
-                      topPadding: topPadding,
-                      isInnerScreen: true,
-                      showAvatar: false,
-                    ),
+                  DashboardAppBar(
+                    title: _controller.isEditing
+                        ? 'Edit Task'
+                        : 'Create Task',
+                    topPadding: topPadding,
+                    isInnerScreen: true,
+                    showAvatar: false,
                   ),
 
                   // Sticky Create Button (Above Bottom Nav)

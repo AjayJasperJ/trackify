@@ -321,16 +321,11 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
                     ),
 
                     // Top Header (Blurred)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: DashboardAppBar(
-                        title: isEditing ? 'Edit Goal' : 'Create Goal',
-                        topPadding: topPadding,
-                        isInnerScreen: true,
-                        showAvatar: false,
-                      ),
+                    DashboardAppBar(
+                      title: isEditing ? 'Edit Goal' : 'Create Goal',
+                      topPadding: topPadding,
+                      isInnerScreen: true,
+                      showAvatar: false,
                     ),
 
                     // Sticky Create Button (Above Bottom Nav)
