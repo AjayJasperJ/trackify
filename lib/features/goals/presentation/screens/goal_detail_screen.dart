@@ -11,7 +11,6 @@ import '../goal_detail_widgets/goal_detail_hero_progress.dart';
 import '../goal_detail_widgets/goal_detail_metrics_grid.dart';
 import '../goal_detail_widgets/goal_detail_milestones.dart';
 import '../goal_detail_widgets/goal_detail_linked_tasks.dart';
-import '../goal_detail_widgets/goal_detail_activity_history.dart';
 
 class GoalDetailScreen extends ConsumerWidget {
   /// Optional fast-path instance passed via `state.extra`; when null (deep
@@ -173,15 +172,6 @@ class _GoalDetailBody extends ConsumerWidget {
                   outline: outline,
                   surface: surface,
                   outlineVariant: outlineVariant,
-                ),
-                const SizedBox(height: 32),
-                GoalDetailActivityHistory(
-                  surfaceContainerLowest: surfaceContainerLowest,
-                  onSurface: onSurface,
-                  onSurfaceVariant: onSurfaceVariant,
-                  secondaryContainer: secondaryContainer,
-                  onSecondaryContainer: onSecondaryContainer,
-                  primary: primary,
                 ),
               ],
             ),

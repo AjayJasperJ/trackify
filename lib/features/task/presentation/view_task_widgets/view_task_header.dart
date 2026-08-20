@@ -50,7 +50,9 @@ class ViewTaskHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isCompleted ? 'COMPLETED' : (task.category?.toUpperCase() ?? 'IN PROGRESS'),
+                      isCompleted
+                          ? 'COMPLETED'
+                          : (task.category?.toUpperCase() ?? 'IN PROGRESS'),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -77,9 +79,11 @@ class ViewTaskHeader extends StatelessWidget {
                   Text(
                     task.description!,
                     style: TextStyle(
-                      fontSize: 14, 
+                      fontSize: 14,
                       color: isCompleted ? Colors.grey : onSurfaceVariant,
-                      decoration: isCompleted ? TextDecoration.lineThrough : null,
+                      decoration: isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
                   ),
                 ],
@@ -142,7 +146,8 @@ class _ParticleBurstButtonState extends State<ParticleBurstButton>
 
   void _triggerBurst() {
     widget.onChanged(!widget.isCompleted);
-    if (!widget.isCompleted) { // That means we are transitioning to true
+    if (!widget.isCompleted) {
+      // That means we are transitioning to true
       particles.clear();
       final random = math.Random();
       for (int i = 0; i < 8; i++) {
@@ -215,7 +220,9 @@ class _ParticleBurstButtonState extends State<ParticleBurstButton>
               child: Center(
                 child: Icon(
                   widget.isCompleted ? Icons.task_alt : Icons.check_circle,
-                  color: widget.isCompleted ? Colors.white : widget.primaryColor,
+                  color: widget.isCompleted
+                      ? Colors.white
+                      : widget.primaryColor,
                   size: 28,
                 ),
               ),
