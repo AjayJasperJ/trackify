@@ -138,6 +138,9 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
       final data = snapshot.data() as Map<String, dynamic>;
       final completedTasks = Map<String, dynamic>.from(data['completedTasks'] as Map? ?? {});
 
+      // ALL READS MUST COME BEFORE WRITES
+      final publicActivitySnapshot = await transaction.get(publicActivityRef);
+
       final taskEntry = completedTasks[taskId];
       if (taskEntry is Map) {
         final updatedEntry = Map<String, dynamic>.from(taskEntry);
@@ -151,13 +154,12 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
         };
       }
 
-      // Update the whole completedTasks map to prevent path-related FieldPath exceptions
+      // WRITES BEGIN HERE
       transaction.update(docRef, {
         'completedTasks': completedTasks,
       });
 
       // Keep the public activity mood in sync.
-      final publicActivitySnapshot = await transaction.get(publicActivityRef);
       if (publicActivitySnapshot.exists &&
           publicActivitySnapshot.data() != null) {
         final publicData = publicActivitySnapshot.data() as Map<String, dynamic>;
