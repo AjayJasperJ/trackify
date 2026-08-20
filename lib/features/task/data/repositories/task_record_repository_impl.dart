@@ -30,6 +30,22 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
   }
 
   @override
+  Future<List<DailyRecordEntity>> getRecordsForDateRange(
+      String userId, String startDateString, String endDateString) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('task_records')
+        .where(FieldPath.documentId, isGreaterThanOrEqualTo: startDateString)
+        .where(FieldPath.documentId, isLessThanOrEqualTo: endDateString)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => DailyRecordEntity.fromMap(doc.data(), doc.id))
+        .toList();
+  }
+
+  @override
   Future<void> toggleTaskCompletion(String userId, String dateString, TaskEntity task, bool isCompleted, {ReflectionEntity? reflection, List<String> completedSubtaskIds = const []}) async {
     final docRef = _firestore
         .collection('users')

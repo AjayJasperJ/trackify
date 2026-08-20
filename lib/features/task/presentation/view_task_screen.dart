@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../domain/entities/task_entity.dart';
 import '../../../widgets/dashboard_app_bar.dart';
 import 'dart:math' as math;
@@ -99,10 +100,54 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    final random = math.Random();
-    _heatmapData = List.generate(30, (_) => random.nextDouble());
+    _heatmapData = List.filled(30, 0.0);
+    _loadHeatmapData();
 
     if (_task == null) _resolveTask();
+  }
+
+  Future<void> _loadHeatmapData() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final startDate = today.subtract(const Duration(days: 29)); // 30 days including today
+
+    final formatter = DateFormat('yyyy-MM-dd');
+    final startStr = formatter.format(startDate);
+    final endStr = formatter.format(today);
+
+    try {
+      final records = await ref.read(taskRecordRepositoryProvider)
+          .getRecordsForDateRange(user.uid, startStr, endStr);
+
+      final recordMap = {for (var r in records) r.dateString: r};
+
+      final newData = <double>[];
+      for (int i = 0; i < 30; i++) {
+        final date = startDate.add(Duration(days: i));
+        final dStr = formatter.format(date);
+
+        final record = recordMap[dStr];
+        double val = 0.0;
+        if (record != null) {
+          final taskEntry = record.completedTasks[widget.taskId];
+          if (taskEntry != null && taskEntry.completed) {
+            val = 1.0;
+          }
+        }
+        newData.add(val);
+      }
+
+      if (mounted) {
+        setState(() {
+          _heatmapData = newData;
+        });
+      }
+    } catch (e) {
+      // Use empty data on failure
+    }
   }
 
   /// Deep-link resolution: fetch the task from Firestore by id.
