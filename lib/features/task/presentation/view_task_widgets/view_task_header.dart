@@ -10,7 +10,9 @@ class ViewTaskHeader extends StatelessWidget {
   final Color onSurfaceVariant;
   final Color surfaceContainerHigh;
   final bool isCompleted;
+  final double numericProgress;
   final ValueChanged<bool> onToggle;
+  final ValueChanged<double> onNumericProgressChanged;
 
   const ViewTaskHeader({
     super.key,
@@ -21,7 +23,9 @@ class ViewTaskHeader extends StatelessWidget {
     required this.onSurfaceVariant,
     required this.surfaceContainerHigh,
     required this.isCompleted,
+    this.numericProgress = 0.0,
     required this.onToggle,
+    required this.onNumericProgressChanged,
   });
 
   @override
@@ -60,6 +64,29 @@ class ViewTaskHeader extends StatelessWidget {
                         color: isCompleted ? Colors.grey : primary,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    if (task.priority != TaskPriority.none)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getPriorityColor(task.priority).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: _getPriorityColor(task.priority).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          task.priority.name.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _getPriorityColor(task.priority),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -91,13 +118,112 @@ class ViewTaskHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          ParticleBurstButton(
-            primaryColor: primary,
-            surfaceContainerHighColor: surfaceContainerHigh,
-            isCompleted: isCompleted,
-            onChanged: onToggle,
+          if (task.trackingMode == TaskTrackingMode.numeric)
+            _buildNumericCounter()
+          else
+            ParticleBurstButton(
+              primaryColor: primary,
+              surfaceContainerHighColor: surfaceContainerHigh,
+              isCompleted: isCompleted,
+              onChanged: onToggle,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNumericCounter() {
+    final target = task.numericTarget ?? 1.0;
+    
+    // Remove trailing zero if it's an integer
+    String formatVal(double v) {
+      if (v == v.truncateToDouble()) return v.toInt().toString();
+      return v.toStringAsFixed(1);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isCompleted ? primary : surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
         ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _CounterButton(
+            icon: Icons.remove,
+            color: isCompleted ? Colors.white70 : primary,
+            onTap: () {
+              if (numericProgress > 0) {
+                onNumericProgressChanged(math.max(0.0, numericProgress - 1.0));
+              }
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              '${formatVal(numericProgress)} / ${formatVal(target)}',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isCompleted ? Colors.white : onSurface,
+              ),
+            ),
+          ),
+          _CounterButton(
+            icon: Icons.add,
+            color: isCompleted ? Colors.white70 : primary,
+            onTap: () {
+              if (numericProgress < target) {
+                onNumericProgressChanged(math.min(target, numericProgress + 1.0));
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getPriorityColor(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.high:
+        return Colors.red;
+      case TaskPriority.medium:
+        return Colors.orange;
+      case TaskPriority.low:
+        return Colors.blue;
+      case TaskPriority.none:
+        return Colors.grey;
+    }
+  }
+}
+
+class _CounterButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _CounterButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, size: 20, color: color),
       ),
     );
   }

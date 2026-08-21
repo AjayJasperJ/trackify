@@ -7,10 +7,14 @@ import 'package:trackify/widgets/form_section_card.dart';
 class AddTaskTrackingCard extends StatefulWidget {
   final TaskTrackingMode trackingMode;
   final int? expectedDurationMinutes;
+  final double? numericTarget;
+  final String? numericUnit;
   final TimeOfDay? startTimeOfDay;
   final TimeOfDay? endTimeOfDay;
   final ValueChanged<TaskTrackingMode> onTrackingModeChanged;
   final ValueChanged<int?> onExpectedDurationChanged;
+  final ValueChanged<double?> onNumericTargetChanged;
+  final ValueChanged<String?> onNumericUnitChanged;
   final ValueChanged<TimeOfDay?> onStartTimeChanged;
   final ValueChanged<TimeOfDay?> onEndTimeChanged;
 
@@ -18,10 +22,14 @@ class AddTaskTrackingCard extends StatefulWidget {
     super.key,
     required this.trackingMode,
     required this.expectedDurationMinutes,
+    required this.numericTarget,
+    required this.numericUnit,
     required this.startTimeOfDay,
     required this.endTimeOfDay,
     required this.onTrackingModeChanged,
     required this.onExpectedDurationChanged,
+    required this.onNumericTargetChanged,
+    required this.onNumericUnitChanged,
     required this.onStartTimeChanged,
     required this.onEndTimeChanged,
   });
@@ -33,6 +41,8 @@ class AddTaskTrackingCard extends StatefulWidget {
 class _AddTaskTrackingCardState extends State<AddTaskTrackingCard> {
   late TextEditingController _hoursController;
   late TextEditingController _minutesController;
+  late TextEditingController _numericTargetController;
+  late TextEditingController _numericUnitController;
 
   @override
   void initState() {
@@ -45,6 +55,12 @@ class _AddTaskTrackingCardState extends State<AddTaskTrackingCard> {
     );
     _minutesController = TextEditingController(
       text: minutes > 0 ? minutes.toString() : '',
+    );
+    _numericTargetController = TextEditingController(
+      text: widget.numericTarget?.toString() ?? '',
+    );
+    _numericUnitController = TextEditingController(
+      text: widget.numericUnit ?? '',
     );
   }
 
@@ -66,6 +82,17 @@ class _AddTaskTrackingCardState extends State<AddTaskTrackingCard> {
         _minutesController.text = newMinutes > 0 ? newMinutes.toString() : '';
       }
     }
+    if (oldWidget.numericTarget != widget.numericTarget) {
+      final currentTarget = double.tryParse(_numericTargetController.text);
+      if (currentTarget != widget.numericTarget) {
+        _numericTargetController.text = widget.numericTarget?.toString() ?? '';
+      }
+    }
+    if (oldWidget.numericUnit != widget.numericUnit) {
+      if (_numericUnitController.text != widget.numericUnit) {
+        _numericUnitController.text = widget.numericUnit ?? '';
+      }
+    }
   }
 
   void _updateDuration() {
@@ -79,6 +106,8 @@ class _AddTaskTrackingCardState extends State<AddTaskTrackingCard> {
   void dispose() {
     _hoursController.dispose();
     _minutesController.dispose();
+    _numericTargetController.dispose();
+    _numericUnitController.dispose();
     super.dispose();
   }
 
@@ -130,13 +159,17 @@ class _AddTaskTrackingCardState extends State<AddTaskTrackingCard> {
         ),
         const SizedBox(height: 24),
         DropdownButtonFormField<TaskTrackingMode>(
-          value: widget.trackingMode,
+          initialValue: widget.trackingMode,
           decoration: AppFormStyles.input(label: 'Tracking Mode'),
           items: const [
             DropdownMenuItem(value: TaskTrackingMode.none, child: Text('None')),
             DropdownMenuItem(
               value: TaskTrackingMode.timer,
               child: Text('Timer (Countdown)'),
+            ),
+            DropdownMenuItem(
+              value: TaskTrackingMode.numeric,
+              child: Text('Numeric Counter'),
             ),
           ],
           onChanged: (val) {
@@ -174,6 +207,43 @@ class _AddTaskTrackingCardState extends State<AddTaskTrackingCard> {
                   ),
                   decoration: AppFormStyles.input(label: 'Minutes', hint: '0'),
                   onChanged: (_) => _updateDuration(),
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (widget.trackingMode == TaskTrackingMode.numeric) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: TextFormField(
+                  controller: _numericTargetController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(
+                    color: AppFormStyles.textColor,
+                    fontSize: 14,
+                  ),
+                  decoration: AppFormStyles.input(label: 'Target', hint: 'e.g. 8'),
+                  onChanged: (val) {
+                    final num = double.tryParse(val);
+                    widget.onNumericTargetChanged(num);
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _numericUnitController,
+                  keyboardType: TextInputType.text,
+                  style: const TextStyle(
+                    color: AppFormStyles.textColor,
+                    fontSize: 14,
+                  ),
+                  decoration: AppFormStyles.input(label: 'Unit (optional)', hint: 'e.g. glasses of water'),
+                  onChanged: widget.onNumericUnitChanged,
                 ),
               ),
             ],

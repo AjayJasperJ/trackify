@@ -40,6 +40,9 @@ class AddTaskController extends ChangeNotifier {
   int? expectedDurationMinutes;
   TimeOfDay? startTimeOfDay;
   TimeOfDay? endTimeOfDay;
+  TaskPriority priority;
+  double? numericTarget;
+  String? numericUnit;
   bool isLoading;
 
   AddTaskController({
@@ -83,6 +86,9 @@ class AddTaskController extends ChangeNotifier {
         expectedDurationMinutes = taskToEdit?.expectedDurationMinutes,
         startTimeOfDay = _parseTimeOfDay(taskToEdit?.startTimeOfDay),
         endTimeOfDay = _parseTimeOfDay(taskToEdit?.endTimeOfDay),
+        priority = taskToEdit?.priority ?? TaskPriority.medium,
+        numericTarget = taskToEdit?.numericTarget,
+        numericUnit = taskToEdit?.numericUnit,
         isLoading = false,
         taskId = taskToEdit?.taskId ??
             FirebaseFirestore.instance.collection('tasks').doc().id,
@@ -256,6 +262,21 @@ class AddTaskController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPriority(TaskPriority p) {
+    priority = p;
+    notifyListeners();
+  }
+
+  void setNumericTarget(double? target) {
+    numericTarget = target;
+    notifyListeners();
+  }
+
+  void setNumericUnit(String? unit) {
+    numericUnit = unit;
+    notifyListeners();
+  }
+
   void setLoading(bool v) {
     isLoading = v;
     notifyListeners();
@@ -307,6 +328,9 @@ class AddTaskController extends ChangeNotifier {
       expectedDurationMinutes: trackingMode == TaskTrackingMode.timer ? expectedDurationMinutes : null,
       startTimeOfDay: _formatTimeOfDay(startTimeOfDay),
       endTimeOfDay: _formatTimeOfDay(endTimeOfDay),
+      priority: priority,
+      numericTarget: trackingMode == TaskTrackingMode.numeric ? numericTarget : null,
+      numericUnit: trackingMode == TaskTrackingMode.numeric ? numericUnit : null,
     );
 
     if (isEditing) {

@@ -4,7 +4,8 @@ import 'schedule_entity.dart';
 import 'subtask_entity.dart';
 import 'task_size.dart';
 
-enum TaskTrackingMode { none, timer }
+enum TaskTrackingMode { none, timer, numeric }
+enum TaskPriority { none, low, medium, high }
 
 class TaskEntity {
   final String taskId;
@@ -25,6 +26,9 @@ class TaskEntity {
   final int? expectedDurationMinutes;
   final String? startTimeOfDay;
   final String? endTimeOfDay;
+  final TaskPriority priority;
+  final double? numericTarget;
+  final String? numericUnit;
 
   /// The linked goal's target date / milestone's deadline — resolved by
   /// providers (task_state_providers) from the goals/milestones streams.
@@ -53,6 +57,9 @@ class TaskEntity {
     this.expectedDurationMinutes,
     this.startTimeOfDay,
     this.endTimeOfDay,
+    this.priority = TaskPriority.none,
+    this.numericTarget,
+    this.numericUnit,
   });
 
   /// Effective expiry for a linked task:
@@ -85,7 +92,16 @@ class TaskEntity {
     TaskTrackingMode parseTrackingMode(dynamic val) {
       final str = ModelParse.toStr(val);
       if (str == 'timer') return TaskTrackingMode.timer;
+      if (str == 'numeric') return TaskTrackingMode.numeric;
       return TaskTrackingMode.none;
+    }
+
+    TaskPriority parsePriority(dynamic val) {
+      final str = ModelParse.toStr(val);
+      if (str == 'high') return TaskPriority.high;
+      if (str == 'low') return TaskPriority.low;
+      if (str == 'medium') return TaskPriority.medium;
+      return TaskPriority.none;
     }
 
     return TaskEntity(
@@ -137,6 +153,9 @@ class TaskEntity {
       endTimeOfDay: map['endTimeOfDay'] != null
           ? ModelParse.toStr(map['endTimeOfDay'])
           : null,
+      priority: parsePriority(map['priority']),
+      numericTarget: map['numericTarget'] != null ? ModelParse.toDouble(map['numericTarget']) : null,
+      numericUnit: map['numericUnit'] != null ? ModelParse.toStr(map['numericUnit']) : null,
     );
   }
 
@@ -159,6 +178,9 @@ class TaskEntity {
       'expectedDurationMinutes': expectedDurationMinutes,
       'startTimeOfDay': startTimeOfDay,
       'endTimeOfDay': endTimeOfDay,
+      'priority': priority.name,
+      'numericTarget': numericTarget,
+      'numericUnit': numericUnit,
     };
   }
 
@@ -181,6 +203,9 @@ class TaskEntity {
     int? expectedDurationMinutes,
     String? startTimeOfDay,
     String? endTimeOfDay,
+    TaskPriority? priority,
+    double? numericTarget,
+    String? numericUnit,
   }) {
     return TaskEntity(
       taskId: taskId ?? this.taskId,
@@ -201,6 +226,9 @@ class TaskEntity {
       expectedDurationMinutes: expectedDurationMinutes ?? this.expectedDurationMinutes,
       startTimeOfDay: startTimeOfDay ?? this.startTimeOfDay,
       endTimeOfDay: endTimeOfDay ?? this.endTimeOfDay,
+      priority: priority ?? this.priority,
+      numericTarget: numericTarget ?? this.numericTarget,
+      numericUnit: numericUnit ?? this.numericUnit,
     );
   }
 }

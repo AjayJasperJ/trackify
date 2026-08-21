@@ -72,7 +72,6 @@ class _GoalDetailBody extends ConsumerWidget {
 
     final Color background = const Color(0xFFFCF9F8);
     final Color surface = const Color(0xFFFCF9F8);
-    final Color surfaceContainerLowest = const Color(0xFFFFFFFF);
     final Color surfaceContainerLow = const Color(0xFFF6F3F2);
     final Color surfaceContainerHighest = const Color(0xFFE4E2E1);
     final Color surfaceContainerHigh = const Color(0xFFEAE7E7);
@@ -84,8 +83,6 @@ class _GoalDetailBody extends ConsumerWidget {
     final Color secondary = const Color(0xFF5E5E5E);
     final Color outline = const Color(0xFF717783);
     final Color outlineVariant = const Color(0xFFC1C7D3);
-    final Color secondaryContainer = const Color(0xFFE1DFDF);
-    final Color onSecondaryContainer = const Color(0xFF626262);
 
     return Scaffold(
       backgroundColor: background,

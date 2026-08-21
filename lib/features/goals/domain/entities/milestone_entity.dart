@@ -8,10 +8,13 @@ enum MilestoneCompletionRule {
 
   /// User manually marks it complete.
   manual,
+
+  /// Time-based tracking (e.g., track for X days).
+  duration,
 }
 
 extension MilestoneCompletionRuleX on MilestoneCompletionRule {
-  String get key => name; // 'allTasks' | 'targetValue' | 'manual'
+  String get key => name; // 'allTasks' | 'targetValue' | 'manual' | 'duration'
 
   static MilestoneCompletionRule fromString(String? value) {
     return MilestoneCompletionRule.values.firstWhere(
@@ -121,6 +124,10 @@ class MilestoneEntity {
       case MilestoneCompletionRule.targetValue:
         if (targetValue == null || targetValue == 0) return 0.0;
         return (currentValue / targetValue!).clamp(0.0, 1.0);
+      case MilestoneCompletionRule.duration:
+        if (targetValue == null || targetValue == 0) return 0.0;
+        final daysPassed = DateTime.now().difference(createdAt).inDays;
+        return (daysPassed / targetValue!).clamp(0.0, 1.0);
       case MilestoneCompletionRule.manual:
         return progress;
     }

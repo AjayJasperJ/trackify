@@ -15,6 +15,7 @@ class MilestoneEditorController extends ChangeNotifier {
   final TextEditingController description;
   final TextEditingController targetValue;
   DateTime? deadline;
+  MilestoneCompletionRule completionRule;
   bool isLoading;
 
   MilestoneEditorController({
@@ -29,6 +30,7 @@ class MilestoneEditorController extends ChangeNotifier {
           text: milestoneToEdit?.targetValue?.toString() ?? '',
         ),
         deadline = milestoneToEdit?.deadline,
+        completionRule = milestoneToEdit?.completionRule ?? MilestoneCompletionRule.allTasks,
         isLoading = false,
         milestoneId = milestoneToEdit?.milestoneId ?? const Uuid().v4(),
         isEditing = milestoneToEdit != null,
@@ -60,6 +62,11 @@ class MilestoneEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCompletionRule(MilestoneCompletionRule rule) {
+    completionRule = rule;
+    notifyListeners();
+  }
+
   Future<void> save(String uid) async {
     final ms = MilestoneEntity(
       milestoneId: milestoneId,
@@ -68,11 +75,10 @@ class MilestoneEditorController extends ChangeNotifier {
       description: description.text.trim(),
       progress: original?.progress ?? 0.0,
       completed: original?.completed ?? false,
-      // Preserve link data + rule on edit — was silently dropped before.
+      // Preserve link data on edit
       linkedTasks: original?.linkedTasks ?? const [],
       linkedTasksMeta: original?.linkedTasksMeta ?? const {},
-      completionRule:
-          original?.completionRule ?? MilestoneCompletionRule.allTasks,
+      completionRule: completionRule,
       targetValue: int.tryParse(targetValue.text.trim()),
       currentValue: original?.currentValue ?? 0,
       deadline: deadline,

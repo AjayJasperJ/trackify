@@ -46,7 +46,7 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
   }
 
   @override
-  Future<void> toggleTaskCompletion(String userId, String dateString, TaskEntity task, bool isCompleted, {ReflectionEntity? reflection, List<String> completedSubtaskIds = const []}) async {
+  Future<void> toggleTaskCompletion(String userId, String dateString, TaskEntity task, bool isCompleted, {ReflectionEntity? reflection, List<String> completedSubtaskIds = const [], double? numericProgress}) async {
     final docRef = _firestore
         .collection('users')
         .doc(userId)
@@ -69,12 +69,13 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
         completedAt: isCompleted ? DateTime.now() : null,
         reflection: reflection,
         completedSubtaskIds: completedSubtaskIds,
+        numericProgress: numericProgress,
       );
 
       // 1. Update task_records
       if (!snapshot.exists) {
         transaction.set(docRef, {
-          'completedTasks': {task.taskId: (isCompleted || completedSubtaskIds.isNotEmpty) ? taskCompletion.toMap() : FieldValue.delete()}
+          'completedTasks': {task.taskId: (isCompleted || completedSubtaskIds.isNotEmpty || numericProgress != null) ? taskCompletion.toMap() : FieldValue.delete()}
         });
       } else {
         transaction.update(docRef, {
@@ -92,7 +93,7 @@ class TaskRecordRepositoryImpl implements TaskRecordRepository {
       publicTasks.removeWhere((t) => t['taskId'] == task.taskId);
 
       // If fully completed or has completed subtasks, add to public activity
-      if (isCompleted || completedSubtaskIds.isNotEmpty) {
+      if (isCompleted || completedSubtaskIds.isNotEmpty || numericProgress != null) {
         publicTasks.add({
           'taskId': task.taskId,
           'taskTitle': task.title,

@@ -4,6 +4,7 @@ import '../../../task/providers/task_state_providers.dart';
 import '../../../authentication/providers/auth_provider.dart';
 import '../../providers/dashboard_providers.dart';
 import 'package:trackify/features/progression/application/task_completion_handler.dart';
+import 'package:trackify/features/task/domain/entities/task_entity.dart';
 
 class DashboardTasksSection extends ConsumerWidget {
   const DashboardTasksSection({super.key});
@@ -61,6 +62,7 @@ class DashboardTasksSection extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
             child: InteractiveDashboardTaskItem(
+              task: task,
               title: task.title,
               tagLabel: task.category ?? 'TASK',
               tagColor: primary.withValues(alpha: 0.1),
@@ -93,6 +95,7 @@ class DashboardTasksSection extends ConsumerWidget {
 }
 
 class InteractiveDashboardTaskItem extends StatefulWidget {
+  final TaskEntity task;
   final String title, tagLabel, timeText;
   final Color tagColor, tagTextColor;
   final bool initialCompleted;
@@ -100,6 +103,7 @@ class InteractiveDashboardTaskItem extends StatefulWidget {
 
   const InteractiveDashboardTaskItem({
     super.key,
+    required this.task,
     required this.title,
     required this.tagLabel,
     required this.tagColor,
@@ -234,6 +238,27 @@ class _InteractiveDashboardTaskItemState
                               ),
                             ),
                           ),
+                          if (widget.task.priority != TaskPriority.none) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getPriorityColor(widget.task.priority).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                widget.task.priority.name.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getPriorityColor(widget.task.priority),
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(width: 4),
                           Text(
                             '• ${widget.timeText}',
@@ -258,5 +283,18 @@ class _InteractiveDashboardTaskItemState
         ),
       ),
     );
+  }
+
+  Color _getPriorityColor(TaskPriority priority) {
+    switch (priority) {
+      case TaskPriority.high:
+        return Colors.red;
+      case TaskPriority.medium:
+        return Colors.orange;
+      case TaskPriority.low:
+        return Colors.blue;
+      case TaskPriority.none:
+        return Colors.grey;
+    }
   }
 }

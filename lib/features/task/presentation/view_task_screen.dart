@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../domain/entities/task_entity.dart';
 import '../../../widgets/dashboard_app_bar.dart';
-import 'dart:math' as math;
 
 import '../providers/task_state_providers.dart';
 import '../domain/entities/reflection_entity.dart';
@@ -62,20 +61,110 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
     final user = ref.read(currentUserProvider);
     final task = _task;
     if (user == null || task == null) return;
+    
+    // If transitioning to completed and it's a numeric task, automatically fill the target
+    double? numericOverride;
+    if (isCompleted && task.trackingMode == TaskTrackingMode.numeric) {
+      numericOverride = task.numericTarget ?? 1.0;
+    } else if (!isCompleted && task.trackingMode == TaskTrackingMode.numeric) {
+      numericOverride = 0.0;
+    }
+    
     try {
-      await ref.read(taskRecordRepositoryProvider).toggleTaskCompletion(
+      await ref
+          .read(taskRecordRepositoryProvider)
+          .toggleTaskCompletion(
             user.uid,
             ref.read(currentDateStringProvider),
             task,
             isCompleted,
+            numericProgress: numericOverride,
           );
       // Refresh heatmap data since consistency might have changed
       _loadHeatmapData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update task: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update task: $e')));
+      }
+    }
+  }
+
+  Future<void> _updateNumericProgress(double newProgress) async {
+    final user = ref.read(currentUserProvider);
+    final task = _task;
+    if (user == null || task == null) return;
+    try {
+      final isCompleted = newProgress >= (task.numericTarget ?? 1.0);
+      await ref
+          .read(taskRecordRepositoryProvider)
+          .toggleTaskCompletion(
+            user.uid,
+            ref.read(currentDateStringProvider),
+            task,
+            isCompleted,
+            numericProgress: newProgress,
+          );
+      _loadHeatmapData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update progress: $e')));
+      }
+    }
+  }
+
+  Future<void> _toggleSubtaskCompletion(
+    String subtaskId,
+    bool isCompleted,
+  ) async {
+    final user = ref.read(currentUserProvider);
+    final task = _task;
+    if (user == null || task == null) return;
+
+    final updatedSubtasks = task.subtasks.map((s) {
+      if (s.subtaskId == subtaskId) {
+        return s.copyWith(isCompleted: isCompleted);
+      }
+      return s;
+    }).toList();
+
+    final updatedTask = task.copyWith(subtasks: updatedSubtasks);
+
+    setState(() {
+      _task = updatedTask;
+    });
+
+    try {
+      await ref.read(taskRepositoryProvider).updateTask(user.uid, updatedTask);
+
+      final allCompleted =
+          updatedSubtasks.isNotEmpty &&
+          updatedSubtasks.every((s) => s.isCompleted);
+
+      final todayRecord = ref.read(todayRecordStreamProvider).valueOrNull;
+      final isMainTaskCompleted =
+          todayRecord?.completedTasks[task.taskId]?.completed ?? false;
+
+      if (allCompleted) {
+        if (!isMainTaskCompleted) {
+          await _toggleTaskCompletion(true);
+        }
+      } else {
+        if (isMainTaskCompleted) {
+          await _toggleTaskCompletion(false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _task = task;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update subtask: $e')));
       }
     }
   }
@@ -86,7 +175,9 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
     if (user == null || task == null) return;
     setState(() => _savingReflection = true);
     try {
-      await ref.read(taskRecordRepositoryProvider).saveReflection(
+      await ref
+          .read(taskRecordRepositoryProvider)
+          .saveReflection(
             user.uid,
             ref.read(currentDateStringProvider),
             task.taskId,
@@ -96,15 +187,15 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
             ),
           );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reflection saved')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Reflection saved')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
       }
     } finally {
       if (mounted) setState(() => _savingReflection = false);
@@ -134,14 +225,17 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final startDate = today.subtract(const Duration(days: 29)); // 30 days including today
+    final startDate = today.subtract(
+      const Duration(days: 29),
+    ); // 30 days including today
 
     final formatter = DateFormat('yyyy-MM-dd');
     final startStr = formatter.format(startDate);
     final endStr = formatter.format(today);
 
     try {
-      final records = await ref.read(taskRecordRepositoryProvider)
+      final records = await ref
+          .read(taskRecordRepositoryProvider)
           .getRecordsForDateRange(user.uid, startStr, endStr);
 
       final recordMap = {for (var r in records) r.dateString: r};
@@ -255,8 +349,9 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
     final todayTasks = ref.watch(todayTasksProvider).valueOrNull ?? [];
     final todayRecord = ref.watch(todayRecordStreamProvider).valueOrNull;
     final isTodayTask = todayTasks.any((t) => t.taskId == task.taskId);
-    final isCompleted =
-        todayRecord?.completedTasks[task.taskId]?.completed ?? false;
+    final taskEntry = todayRecord?.completedTasks[task.taskId];
+    final isCompleted = taskEntry?.completed ?? false;
+    final numericProgress = taskEntry?.numericProgress ?? 0.0;
     final moodEnabled = isTodayTask && isCompleted;
 
     return Scaffold(
@@ -279,7 +374,9 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                   onSurfaceVariant: onSurfaceVariant,
                   surfaceContainerHigh: surfaceContainerHigh,
                   isCompleted: isCompleted,
+                  numericProgress: numericProgress,
                   onToggle: _toggleTaskCompletion,
+                  onNumericProgressChanged: _updateNumericProgress,
                 ),
                 ViewTaskBentoStats(
                   task: task,
@@ -298,6 +395,7 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                   primary: primary,
                   outlineVariant: outlineVariant,
                   surfaceVariant: surfaceVariant,
+                  onToggle: _toggleSubtaskCompletion,
                 ),
                 ViewTaskHeatmap(
                   heatmapData: _heatmapData,
@@ -312,10 +410,20 @@ class _ViewTaskScreenState extends ConsumerState<ViewTaskScreen>
                   saving: _savingReflection,
                   initialMoodIndex: () {
                     final idx = _moodLevels.indexOf(
-                        todayRecord?.completedTasks[task.taskId]?.reflection?.level ?? 'Normal');
+                      todayRecord
+                              ?.completedTasks[task.taskId]
+                              ?.reflection
+                              ?.level ??
+                          'Normal',
+                    );
                     return idx >= 0 ? idx : 2;
                   }(),
-                  initialNote: todayRecord?.completedTasks[task.taskId]?.reflection?.note ?? '',
+                  initialNote:
+                      todayRecord
+                          ?.completedTasks[task.taskId]
+                          ?.reflection
+                          ?.note ??
+                      '',
                   onSave: (moodIndex, note) => _saveReflection(moodIndex, note),
                   onSurface: onSurface,
                   surfaceContainerLow: surfaceContainerLow,

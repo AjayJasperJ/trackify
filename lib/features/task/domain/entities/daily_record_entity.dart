@@ -8,6 +8,7 @@ class TaskCompletionEntity {
   final DateTime? completedAt;
   final ReflectionEntity? reflection;
   final List<String> completedSubtaskIds;
+  final double? numericProgress;
 
   const TaskCompletionEntity({
     required this.taskId,
@@ -15,6 +16,7 @@ class TaskCompletionEntity {
     this.completedAt,
     this.reflection,
     this.completedSubtaskIds = const [],
+    this.numericProgress,
   });
 
   Map<String, dynamic> toMap() {
@@ -24,6 +26,7 @@ class TaskCompletionEntity {
       'completedAt': completedAt?.toIso8601String(),
       'reflection': reflection?.toMap(),
       'completedSubtaskIds': completedSubtaskIds,
+      'numericProgress': numericProgress,
     };
   }
 
@@ -39,6 +42,7 @@ class TaskCompletionEntity {
         ReflectionEntity.fromMap,
       ),
       completedSubtaskIds: ModelParse.toStrList(map['completedSubtaskIds']),
+      numericProgress: map['numericProgress'] != null ? ModelParse.toDouble(map['numericProgress']) : null,
     );
   }
 
@@ -48,6 +52,7 @@ class TaskCompletionEntity {
     DateTime? completedAt,
     ReflectionEntity? reflection,
     List<String>? completedSubtaskIds,
+    double? numericProgress,
   }) {
     return TaskCompletionEntity(
       taskId: taskId ?? this.taskId,
@@ -55,6 +60,7 @@ class TaskCompletionEntity {
       completedAt: completedAt ?? this.completedAt,
       reflection: reflection ?? this.reflection,
       completedSubtaskIds: completedSubtaskIds ?? this.completedSubtaskIds,
+      numericProgress: numericProgress ?? this.numericProgress,
     );
   }
 }

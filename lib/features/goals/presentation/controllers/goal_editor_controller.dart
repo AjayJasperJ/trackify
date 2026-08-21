@@ -14,7 +14,7 @@ import '../../domain/repositories/milestone_repository.dart';
 /// The Goal Type enum used to be declared inside create_goal_screen.dart and
 /// imported by child widgets. It now lives with the editor controller so the
 /// screen and its cards share one definition.
-enum GoalType { open, date }
+enum GoalType { open, date, duration }
 
 /// `ponytail:` Not a full editor framework — this is the smallest controller
 /// that makes the create-goal flow testable and removes setState churn. If the
@@ -31,6 +31,7 @@ class GoalEditorController extends ChangeNotifier {
   final TextEditingController category = TextEditingController();
   DateTime startDate;
   DateTime? targetDate;
+  int? durationDays;
   bool isStrict;
   GoalType goalType;
   GoalPriority priority;
@@ -50,9 +51,13 @@ class GoalEditorController extends ChangeNotifier {
         goalId = goalToEdit?.goalId ?? const Uuid().v4(),
         startDate = goalToEdit?.startDate ?? DateTime.now(),
         targetDate = goalToEdit?.targetDate,
+        durationDays = goalToEdit?.durationDays,
         isStrict = goalToEdit?.isStrict ?? false,
-        goalType =
-            goalToEdit?.targetDate != null ? GoalType.date : GoalType.open,
+        goalType = goalToEdit?.durationDays != null
+            ? GoalType.duration
+            : goalToEdit?.targetDate != null
+                ? GoalType.date
+                : GoalType.open,
         priority = goalToEdit?.priority ?? GoalPriority.medium,
         icon = (goalToEdit?.icon.isNotEmpty ?? false)
             ? goalToEdit!.icon
@@ -111,6 +116,13 @@ class GoalEditorController extends ChangeNotifier {
   void setGoalType(GoalType t) {
     goalType = t;
     if (t != GoalType.date) targetDate = null;
+    if (t != GoalType.duration) durationDays = null;
+    notifyListeners();
+  }
+
+  void setDurationDays(int? days) {
+    durationDays = days;
+    goalType = days != null ? GoalType.duration : goalType;
     notifyListeners();
   }
 
@@ -204,6 +216,12 @@ class GoalEditorController extends ChangeNotifier {
         throw Exception('Goal duration must be at least 10 days');
       }
     }
+    
+    if (goalType == GoalType.duration) {
+      if (durationDays == null || durationDays! <= 0) {
+        throw Exception('Please enter a valid duration in days');
+      }
+    }
 
     final now = DateTime.now();
     // kept status/progress/archived/createdAt from goalToEdit; hardcoding
@@ -226,6 +244,7 @@ class GoalEditorController extends ChangeNotifier {
     }
 
     if (targetDate != null) calculatedXP += 500;
+    if (durationDays != null) calculatedXP += (durationDays! * 10);
     if (isStrict) calculatedXP += 1000;
     
     calculatedXP += milestones.length * 250;
@@ -243,6 +262,7 @@ class GoalEditorController extends ChangeNotifier {
       targetXP: calculatedXP,
       startDate: startDate,
       targetDate: targetDate,
+      durationDays: durationDays,
       createdAt: _originalCreatedAt,
       updatedAt: now,
       isStrict: isStrict,

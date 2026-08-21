@@ -9,6 +9,7 @@ class ViewTaskSubtasks extends StatelessWidget {
   final Color primary;
   final Color outlineVariant;
   final Color surfaceVariant;
+  final Function(String, bool)? onToggle;
 
   const ViewTaskSubtasks({
     super.key,
@@ -19,6 +20,7 @@ class ViewTaskSubtasks extends StatelessWidget {
     required this.primary,
     required this.outlineVariant,
     required this.surfaceVariant,
+    this.onToggle,
   });
 
   @override
@@ -72,12 +74,14 @@ class ViewTaskSubtasks extends StatelessWidget {
               children: [
                 for (var i = 0; i < subtasks.length; i++) ...[
                   _InteractiveSubtask(
+                    subtaskId: subtasks[i].subtaskId,
                     text: subtasks[i].title,
                     initialCompleted: subtasks[i].isCompleted,
                     primary: primary,
                     outlineVariant: outlineVariant,
                     secondary: secondary,
                     onSurface: onSurface,
+                    onToggle: onToggle,
                   ),
                   if (i < subtasks.length - 1)
                     Divider(
@@ -120,17 +124,21 @@ class ViewTaskSubtasks extends StatelessWidget {
 }
 
 class _InteractiveSubtask extends StatefulWidget {
+  final String subtaskId;
   final String text;
   final bool initialCompleted;
   final Color primary, outlineVariant, secondary, onSurface;
+  final Function(String, bool)? onToggle;
 
   const _InteractiveSubtask({
+    required this.subtaskId,
     required this.text,
     required this.initialCompleted,
     required this.primary,
     required this.outlineVariant,
     required this.secondary,
     required this.onSurface,
+    this.onToggle,
   });
 
   @override
@@ -151,7 +159,12 @@ class _InteractiveSubtaskState extends State<_InteractiveSubtask> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => setState(() => isCompleted = !isCompleted),
+        onTap: () {
+          setState(() => isCompleted = !isCompleted);
+          if (widget.onToggle != null) {
+            widget.onToggle!(widget.subtaskId, isCompleted);
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(

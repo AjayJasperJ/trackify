@@ -9,6 +9,11 @@ class CreateGoalTypeCard extends StatelessWidget {
   // Date goal
   final DateTime? selectedDate;
   final ValueChanged<DateTime?>? onDateChanged;
+  
+  // Duration goal
+  final int? durationDays;
+  final ValueChanged<int?>? onDurationDaysChanged;
+
   final bool isStrict;
   final ValueChanged<bool> onStrictChanged;
 
@@ -20,6 +25,8 @@ class CreateGoalTypeCard extends StatelessWidget {
     required this.onStrictChanged,
     this.selectedDate,
     this.onDateChanged,
+    this.durationDays,
+    this.onDurationDaysChanged,
   });
 
   @override
@@ -31,6 +38,8 @@ class CreateGoalTypeCard extends StatelessWidget {
         _buildTypeOption('Open-ended Goal', 'Ongoing progress', GoalType.open),
         const SizedBox(height: 8),
         _buildTypeOption('Target Date Goal', 'Fixed deadline', GoalType.date),
+        const SizedBox(height: 8),
+        _buildTypeOption('Duration Goal', 'Track for X days', GoalType.duration),
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -97,11 +106,60 @@ class CreateGoalTypeCard extends StatelessWidget {
   }
 
   Widget _buildDynamicGoalTypeOptions(BuildContext context) {
+    if (selectedGoalType == GoalType.duration) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Goal Duration (Days)',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              initialValue: durationDays?.toString(),
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'e.g., 90',
+                filled: true,
+                fillColor: AppColors.surfaceContainerLowest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(
+                    color: AppColors.outlineVariant.withValues(alpha: 0.3),
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              onChanged: (val) {
+                final days = int.tryParse(val);
+                onDurationDaysChanged?.call(days);
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
     final label = selectedDate != null
         ? '${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.year}'
         : 'mm/dd/yyyy';
 
-    // Date-goal deadline picker (Duration goal was never persisted — removed).
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

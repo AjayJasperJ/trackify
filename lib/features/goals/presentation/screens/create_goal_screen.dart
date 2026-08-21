@@ -238,6 +238,8 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
                             onGoalTypeChanged: _controller.setGoalType,
                             selectedDate: _controller.targetDate,
                             onDateChanged: _controller.setTargetDate,
+                            durationDays: _controller.durationDays,
+                            onDurationDaysChanged: _controller.setDurationDays,
                             isStrict: _controller.isStrict,
                             onStrictChanged: _controller.setStrict,
                           ),

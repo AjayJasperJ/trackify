@@ -150,18 +150,47 @@ class _MilestoneEditorScreenState extends ConsumerState<MilestoneEditorScreen> {
                                 maxLines: 3,
                               ),
                               const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _controller.targetValue,
-                                style: const TextStyle(
-                                  color: AppFormStyles.textColor,
+                                TextFormField(
+                                  controller: _controller.targetValue,
+                                  style: const TextStyle(
+                                    color: AppFormStyles.textColor,
+                                  ),
+                                  decoration: AppFormStyles.input(
+                                    label: _controller.completionRule == MilestoneCompletionRule.duration
+                                      ? 'Target Duration (Days)'
+                                      : 'Target Value',
+                                    hint: _controller.completionRule == MilestoneCompletionRule.duration
+                                      ? 'e.g. 90'
+                                      : 'Optional, e.g. 10 tasks',
+                                  ),
+                                  keyboardType: TextInputType.number,
                                 ),
-                                decoration: AppFormStyles.input(
-                                  label: 'Target Value',
-                                  hint: 'Optional, e.g. 10 tasks',
+                                const SizedBox(height: 16),
+                                DropdownButtonFormField<MilestoneCompletionRule>(
+                                  initialValue: _controller.completionRule,
+                                  dropdownColor: AppColors.surfaceContainerHigh,
+                                  style: const TextStyle(
+                                    color: AppFormStyles.textColor,
+                                  ),
+                                  decoration: AppFormStyles.input(
+                                    label: 'Completion Rule',
+                                  ),
+                                  items: MilestoneCompletionRule.values.map((rule) {
+                                    String label = rule.name;
+                                    if (rule == MilestoneCompletionRule.allTasks) label = 'All Linked Tasks';
+                                    if (rule == MilestoneCompletionRule.targetValue) label = 'Reach Target Value';
+                                    if (rule == MilestoneCompletionRule.duration) label = 'Time Duration (Days)';
+                                    if (rule == MilestoneCompletionRule.manual) label = 'Manual Completion';
+                                    return DropdownMenuItem(
+                                      value: rule,
+                                      child: Text(label),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    if (val != null) _controller.setCompletionRule(val);
+                                  },
                                 ),
-                                keyboardType: TextInputType.number,
-                              ),
-                              const SizedBox(height: 16),
+                                const SizedBox(height: 16),
                               InkWell(
                                 onTap: _selectDeadline,
                                 borderRadius: BorderRadius.circular(

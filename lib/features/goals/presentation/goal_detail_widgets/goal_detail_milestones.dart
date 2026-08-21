@@ -77,13 +77,34 @@ class GoalDetailMilestones extends ConsumerWidget {
                   
                   MilestoneState state = MilestoneState.upcoming;
                   final computedProgress = m.computedProgress;
-                  if (m.completed) {
+                  
+                  bool isCompleted = m.completed;
+                  
+                  // Auto-complete duration milestones if time has passed
+                  if (!isCompleted && 
+                      m.completionRule == MilestoneCompletionRule.duration && 
+                      computedProgress >= 1.0) {
+                    isCompleted = true;
+                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                      final user = ref.read(currentUserProvider);
+                      if (user != null) {
+                        final updated = m.copyWith(
+                          completed: true,
+                          progress: 1.0,
+                          completedAt: DateTime.now(),
+                        );
+                        await ref.read(milestoneRepositoryProvider).updateMilestone(user.uid, updated);
+                      }
+                    });
+                  }
+
+                  if (isCompleted) {
                     state = MilestoneState.completed;
                   } else if (computedProgress > 0) {
                     state = MilestoneState.active;
                   }
 
-                  String subtitle = m.completed 
+                  String subtitle = isCompleted 
                       ? 'Completed on ${m.completedAt != null ? DateFormat('MMM d').format(m.completedAt!) : 'Unknown'}' 
                       : (computedProgress > 0 ? 'In Progress • ${(computedProgress * 100).toInt()}%' : 'Upcoming');
 
@@ -134,22 +155,23 @@ class GoalDetailMilestones extends ConsumerWidget {
                       onSurface: onSurface,
                       onSurfaceVariant: onSurfaceVariant,
                       trailing: Checkbox(
-                        value: m.completed,
+                        value: isCompleted,
                         activeColor: primary,
                         onChanged: (val) async {
                           if (val != null && context.mounted) {
                             final user = ref.read(currentUserProvider);
                             if (user != null) {
                               // Manual override only makes sense for the
-                              // `manual` rule. For allTasks/targetValue the
+                              // `manual` and `duration` rule. For allTasks/targetValue the
                               // milestone completes when linked tasks do
                               // (fed via updateTaskContribution on toggle).
                               final rule = m.completionRule;
                               if (rule == MilestoneCompletionRule.manual ||
-                                  (val == false && !m.completed)) {
+                                  rule == MilestoneCompletionRule.duration ||
+                                  (val == false && !isCompleted)) {
                                 final updated = m.copyWith(
                                   completed: val,
-                                  progress: val ? 1.0 : 0.0,
+                                  progress: val ? 1.0 : (rule == MilestoneCompletionRule.duration ? m.computedProgress : 0.0),
                                   completedAt: val ? DateTime.now() : null,
                                 );
                                 await ref
