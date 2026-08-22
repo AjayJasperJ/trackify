@@ -3,6 +3,7 @@ import '../entities/progression_entity.dart';
 import '../entities/xp_history_entity.dart';
 import '../repositories/progression_repository.dart';
 import 'package:trackify/features/task/domain/entities/task_size.dart';
+import 'package:trackify/features/task/domain/entities/task_entity.dart';
 
 class ProgressionService {
   final ProgressionRepository repository;
@@ -48,16 +49,71 @@ class ProgressionService {
     return (100 * pow(1.15, level - 1)).round();
   }
 
+  double calculateTaskFocusScore(TaskEntity task, int completedSubtasks, int currentStreak, double? moodLevel) {
+    double score = 50.0; // Base score
+
+    // Priority bonus
+    switch (task.priority) {
+      case TaskPriority.high:
+        score += 15.0;
+        break;
+      case TaskPriority.medium:
+        score += 10.0;
+        break;
+      case TaskPriority.low:
+        score += 5.0;
+        break;
+      case TaskPriority.none:
+        break;
+    }
+
+    // Tracking mode bonus
+    switch (task.trackingMode) {
+      case TaskTrackingMode.timer:
+        score += 20.0;
+        break;
+      case TaskTrackingMode.numeric:
+        score += 10.0;
+        break;
+      case TaskTrackingMode.none:
+        break;
+    }
+
+    // Subtask compliance
+    if (task.subtasks.isNotEmpty) {
+      final ratio = (completedSubtasks / task.subtasks.length).clamp(0.0, 1.0);
+      score += ratio * 15.0;
+    } else {
+      score += 15.0;
+    }
+
+    // Streak bonus
+    score += min(currentStreak * 0.5, 10.0);
+
+    // Mood factor
+    if (moodLevel != null) {
+      score += (moodLevel / 5.0) * 10.0;
+    } else {
+      score += 7.5;
+    }
+
+    return score.clamp(0.0, 100.0);
+  }
+
   Future<int> processTaskCompletion({
     required String uid,
-    required String taskId,
-    required TaskSize size,
+    required TaskEntity task,
     required int completedSubtasks,
+    double? moodReflectionLevel,
     bool isFirstTaskOfDay = false,
   }) async {
     ProgressionEntity progression =
         await repository.getProgression(uid) ??
         ProgressionEntity(updatedAt: DateTime.now());
+
+    final streak = await repository.getStreak(uid);
+    final currentStreak = streak?.currentStreak ?? 0;
+    final longestStreak = streak?.longestStreak ?? 0;
 
     // Reset daily stats if it's a new day
     final now = DateTime.now();
@@ -73,7 +129,7 @@ class ProgressionService {
     double totalGeneratedXP = 0;
 
     // 1. Base XP
-    int baseXP = getBaseXP(size);
+    int baseXP = getBaseXP(task.taskSize);
     totalGeneratedXP += baseXP;
 
     // 2. Subtask XP (max 15 per task)
@@ -81,7 +137,7 @@ class ProgressionService {
     totalGeneratedXP += subtaskXP;
 
     // 3. Apply Streak Multiplier
-    double streakMultiplier = getStreakMultiplier(progression.currentStreak);
+    double streakMultiplier = getStreakMultiplier(currentStreak);
     totalGeneratedXP += totalGeneratedXP * streakMultiplier;
 
     // 4. Apply Level Bonus
@@ -120,12 +176,24 @@ class ProgressionService {
       }
     }
 
+    // Compute task focus and dynamic Exponential Moving Average (EMA)
+    final taskFocus = calculateTaskFocusScore(task, completedSubtasks, currentStreak, moodReflectionLevel);
+    double newFocusScore = progression.focusScore == 0.0
+        ? taskFocus
+        : (progression.focusScore * 0.8) + (taskFocus * 0.2);
+
     if (actualAwardedXP == 0) {
       // Nothing to do if cap exceeded entirely and no XP awarded
-      // Still need to update last completed date
+      // Still need to update last completed date, focus score, and streak
       await repository.updateProgression(
         uid,
-        progression.copyWith(lastCompletedDate: now, updatedAt: now),
+        progression.copyWith(
+          lastCompletedDate: now, 
+          updatedAt: now,
+          focusScore: newFocusScore,
+          currentStreak: currentStreak,
+          longestStreak: longestStreak,
+        ),
       );
       return actualAwardedXP;
     }
@@ -148,6 +216,9 @@ class ProgressionService {
       lifetimeXP: progression.lifetimeXP + actualAwardedXP,
       todayXP: currentTodayXP,
       todayXPRemaining: max(0, 250 - currentTodayXP),
+      focusScore: newFocusScore,
+      currentStreak: currentStreak,
+      longestStreak: longestStreak,
       lastCompletedDate: now,
       updatedAt: now,
     );
@@ -159,7 +230,7 @@ class ProgressionService {
       historyId: '', // Set by repo
       date:
           "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}",
-      taskId: taskId,
+      taskId: task.taskId,
       source: 'task_completion',
       baseXP: baseXP,
       bonusXP: actualAwardedXP - baseXP, // Approximate representation

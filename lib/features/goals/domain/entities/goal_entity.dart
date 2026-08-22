@@ -23,6 +23,7 @@ class GoalEntity {
   final bool isStrict;
   final List<String> linkedTasks;
   final int? durationDays;
+  final bool isPrivate;
 
   const GoalEntity({
     required this.goalId,
@@ -47,6 +48,7 @@ class GoalEntity {
     this.isStrict = false,
     this.linkedTasks = const [],
     this.durationDays,
+    this.isPrivate = false,
   });
 
   /// Identity-independent equality (used for dropdown value matching,
@@ -76,6 +78,7 @@ class GoalEntity {
     bool? isStrict,
     List<String>? linkedTasks,
     int? durationDays,
+    bool? isPrivate,
   }) {
     return GoalEntity(
       goalId: goalId ?? this.goalId,
@@ -100,6 +103,7 @@ class GoalEntity {
       isStrict: isStrict ?? this.isStrict,
       linkedTasks: linkedTasks ?? this.linkedTasks,
       durationDays: durationDays ?? this.durationDays,
+      isPrivate: isPrivate ?? this.isPrivate,
     );
   }
 
@@ -127,6 +131,7 @@ class GoalEntity {
       'isStrict': isStrict,
       'linkedTasks': linkedTasks,
       'durationDays': durationDays,
+      'isPrivate': isPrivate,
     };
   }
 
@@ -160,6 +165,7 @@ class GoalEntity {
       isStrict: map['isStrict'] ?? false,
       linkedTasks: List<String>.from(map['linkedTasks'] ?? []),
       durationDays: map['durationDays']?.toInt(),
+      isPrivate: map['isPrivate'] ?? false,
     );
   }
 }

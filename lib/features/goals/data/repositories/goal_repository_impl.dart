@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/goal_entity.dart';
+import '../../domain/entities/goal_enums.dart';
 import '../../domain/repositories/goal_repository.dart';
 
 class GoalRepositoryImpl implements GoalRepository {
@@ -17,12 +18,79 @@ class GoalRepositoryImpl implements GoalRepository {
 
   @override
   Future<void> updateGoal(String uid, GoalEntity goal) async {
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('goals')
-        .doc(goal.goalId)
-        .update(goal.toMap());
+    // 1. Get the current goal state from DB to check if targetDate changed or status changed
+    final currentGoalSnap = await _firestore.collection('users').doc(uid).collection('goals').doc(goal.goalId).get();
+    DateTime? oldTargetDate;
+    bool becameCompleted = false;
+    if (currentGoalSnap.exists && currentGoalSnap.data() != null) {
+      final data = currentGoalSnap.data()!;
+      oldTargetDate = data['targetDate'] != null ? DateTime.parse(data['targetDate']) : null;
+      final oldStatus = data['status'] as String?;
+      if (goal.status == GoalStatus.completed && oldStatus != 'completed') {
+        becameCompleted = true;
+      }
+    }
+
+    final batch = _firestore.batch();
+    batch.update(
+      _firestore.collection('users').doc(uid).collection('goals').doc(goal.goalId),
+      goal.toMap(),
+    );
+
+    // If targetDate changed or status became completed, cascade update to tasks
+    final targetDateChanged = goal.targetDate != oldTargetDate;
+    if (targetDateChanged || becameCompleted) {
+      final tasksSnapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('tasks')
+          .where('goalId', isEqualTo: goal.goalId)
+          .get();
+
+      for (var doc in tasksSnapshot.docs) {
+        final taskData = doc.data();
+        final updates = <String, dynamic>{};
+
+        if (becameCompleted) {
+          updates['isArchived'] = true;
+        }
+
+        if (targetDateChanged) {
+          final milestoneId = taskData['milestoneId'] as String?;
+          DateTime? calcEffectiveEndDate = goal.targetDate;
+
+          if (milestoneId != null) {
+            // Fetch the milestone to see if it has a deadline
+            final msSnap = await _firestore
+                .collection('users')
+                .doc(uid)
+                .collection('goals')
+                .doc(goal.goalId)
+                .collection('milestones')
+                .doc(milestoneId)
+                .get();
+            if (msSnap.exists && msSnap.data() != null) {
+              final msData = msSnap.data()!;
+              final msDeadline = msData['deadline'] != null ? DateTime.parse(msData['deadline']) : null;
+              if (msDeadline != null) {
+                calcEffectiveEndDate = msDeadline;
+              }
+            }
+          }
+
+          // If no milestone deadline overrides it, fall back to the goal's targetDate or the task's own endDate
+          calcEffectiveEndDate ??= taskData['endDate'] != null ? DateTime.parse(taskData['endDate']) : null;
+
+          updates['effectiveEndDate'] = calcEffectiveEndDate?.toIso8601String();
+        }
+
+        if (updates.isNotEmpty) {
+          batch.update(doc.reference, updates);
+        }
+      }
+    }
+
+    await batch.commit();
   }
 
   @override

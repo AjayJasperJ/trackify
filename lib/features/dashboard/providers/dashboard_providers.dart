@@ -8,7 +8,7 @@ import '../../task/data/repositories/task_repository_impl.dart';
 import '../../task/domain/repositories/streak_repository.dart';
 import '../../task/domain/repositories/task_record_repository.dart';
 import '../../task/domain/repositories/task_repository.dart';
-import '../../goals/data/repositories/milestone_repository_impl.dart';
+
 
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   return FirebaseFirestore.instance;
@@ -24,7 +24,6 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 final taskRecordRepositoryProvider = Provider<TaskRecordRepository>((ref) {
   return TaskRecordRepositoryImpl(
     ref.watch(firestoreProvider),
-    MilestoneRepositoryImpl(firestore: ref.watch(firestoreProvider)),
   );
 });
 

@@ -32,14 +32,21 @@ class FormSectionCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, color: AppColors.primary, size: 20),
-                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: AppColors.primary, size: 18),
+                  ),
+                  const SizedBox(width: 10),
                   Text(
-                    title,
+                    title.toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
                       color: AppColors.primary,
                     ),
                   ),
@@ -48,7 +55,7 @@ class FormSectionCard extends StatelessWidget {
               ?action,
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           ...children,
         ],
       ),

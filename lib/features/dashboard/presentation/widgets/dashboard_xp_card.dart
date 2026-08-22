@@ -18,6 +18,21 @@ class DashboardXpCard extends ConsumerWidget {
         ? (currentXp / requiredXp).clamp(0.0, 1.0)
         : 0.0;
 
+    final todayXP = progression?.todayXP ?? 0;
+    String capText = '$todayXP / 250 Daily XP';
+    Color capTextColor = const Color(0xFFE3ECFF).withValues(alpha: 0.9);
+    IconData capIcon = Icons.info_outline;
+
+    if (todayXP >= 350) {
+      capText = 'Daily XP Cap Reached (0% gain)';
+      capTextColor = const Color(0xFFFFB4B4);
+      capIcon = Icons.lock_outline;
+    } else if (todayXP >= 250) {
+      capText = 'Soft XP Cap Reached (25% gain: $todayXP/350 XP)';
+      capTextColor = const Color(0xFFFFDFB4);
+      capIcon = Icons.warning_amber_outlined;
+    }
+
     final primaryContainer = const Color(0xFF0F6CBD);
     final onPrimaryContainer = const Color(0xFFE3ECFF);
     final outlineVariant = const Color(0xFFC1C7D3);
@@ -120,22 +135,46 @@ class DashboardXpCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    text: '$xpUntilNext XP until ',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'Inter',
-                      color: onPrimaryContainer.withValues(alpha: 0.9),
-                    ),
-                    children: [
-                      TextSpan(
-                        text: nextRank,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        text: '$xpUntilNext XP until ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'Inter',
+                          color: onPrimaryContainer.withValues(alpha: 0.9),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: nextRank,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const TextSpan(text: ' rank'),
+                        ],
                       ),
-                      const TextSpan(text: ' rank'),
-                    ],
-                  ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          capIcon,
+                          size: 14,
+                          color: capTextColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          capText,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: capTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

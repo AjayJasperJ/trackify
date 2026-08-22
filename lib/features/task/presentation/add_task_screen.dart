@@ -9,6 +9,7 @@ import 'package:trackify/widgets/dashboard_app_bar.dart';
 import 'package:trackify/features/task/domain/entities/task_entity.dart';
 import 'package:trackify/features/dashboard/providers/dashboard_providers.dart';
 import 'package:trackify/theme/app_colors.dart';
+import 'package:trackify/theme/app_categories.dart';
 import 'package:trackify/widgets/form_primary_button.dart';
 import 'package:trackify/widgets/form_section_card.dart';
 
@@ -36,13 +37,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   late final AddTaskController _controller;
 
-  final List<String> _categories = [
-    'Personal',
-    'Professional',
-    'School',
-    'Gym',
-    'Other',
-  ];
+  final List<String> _categories = List.from(AppCategories.values);
 
   final List<String> _weekdayNames = [
     'Mon',
@@ -206,9 +201,11 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                             descriptionController: _controller.description,
                             selectedCategory: _controller.selectedCategory,
                             priority: _controller.priority,
+                            isPrivate: _controller.isPrivate,
                             categories: _categories,
                             onCategoryChanged: _controller.setCategory,
                             onPriorityChanged: _controller.setPriority,
+                            onPrivateChanged: _controller.setPrivate,
                           ),
                           const SizedBox(height: 24),
                           AddTaskScheduleCard(

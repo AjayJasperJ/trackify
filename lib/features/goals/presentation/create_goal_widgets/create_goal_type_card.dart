@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controllers/goal_editor_controller.dart' show GoalType;
 import 'create_goal_section_card.dart';
 import '../../../../../theme/app_colors.dart';
+import '../../../../../theme/app_form_styles.dart';
 
 class CreateGoalTypeCard extends StatelessWidget {
   final GoalType selectedGoalType;
@@ -107,117 +108,55 @@ class CreateGoalTypeCard extends StatelessWidget {
 
   Widget _buildDynamicGoalTypeOptions(BuildContext context) {
     if (selectedGoalType == GoalType.duration) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(12),
+      return TextFormField(
+        initialValue: durationDays?.toString(),
+        keyboardType: TextInputType.number,
+        style: const TextStyle(color: AppColors.onSurface, fontSize: 14),
+        decoration: AppFormStyles.input(
+          label: 'Goal Duration (Days)',
+          hint: 'e.g. 90',
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Goal Duration (Days)',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: durationDays?.toString(),
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: 'e.g., 90',
-                filled: true,
-                fillColor: AppColors.surfaceContainerLowest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              onChanged: (val) {
-                final days = int.tryParse(val);
-                onDurationDaysChanged?.call(days);
-              },
-            ),
-          ],
-        ),
+        onChanged: (val) {
+          final days = int.tryParse(val);
+          onDurationDaysChanged?.call(days);
+        },
       );
     }
 
     final label = selectedDate != null
         ? '${selectedDate!.month.toString().padLeft(2, '0')}/${selectedDate!.day.toString().padLeft(2, '0')}/${selectedDate!.year}'
-        : 'mm/dd/yyyy';
+        : 'Select Target Date';
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Select Deadline',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          GestureDetector(
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: selectedDate ?? DateTime.now().add(const Duration(days: 30)),
-                firstDate: DateTime.now(),
-                lastDate: DateTime(2100),
-              );
-              if (picked != null) onDateChanged?.call(picked);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_month, color: AppColors.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: selectedDate != null
-                            ? AppColors.onSurface
-                            : AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: selectedDate ?? DateTime.now().add(const Duration(days: 30)),
+          firstDate: DateTime.now(),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) onDateChanged?.call(picked);
+      },
+      borderRadius: BorderRadius.circular(AppFormStyles.inputRadius),
+      child: InputDecorator(
+        decoration: AppFormStyles.input(
+          label: 'Target Date',
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month, color: AppColors.primary, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: selectedDate != null
+                    ? AppColors.onSurface
+                    : AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                fontSize: 14,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

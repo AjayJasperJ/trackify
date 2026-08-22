@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/progression_entity.dart';
 import '../../domain/entities/xp_history_entity.dart';
 import '../../domain/repositories/progression_repository.dart';
+import '../../../task/domain/entities/streak_entity.dart';
 
 class ProgressionRepositoryImpl implements ProgressionRepository {
   final FirebaseFirestore _firestore;
@@ -142,5 +143,19 @@ class ProgressionRepositoryImpl implements ProgressionRepository {
       print('Error reverting all task XP: $e');
       return 0;
     }
+  }
+
+  @override
+  Future<StreakEntity?> getStreak(String uid) async {
+    final doc = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('streak')
+        .doc('current')
+        .get();
+    if (!doc.exists || doc.data() == null) {
+      return null;
+    }
+    return StreakEntity.fromMap(doc.data()!);
   }
 }

@@ -225,12 +225,14 @@ class _CreateGoalScreenState extends ConsumerState<CreateGoalScreen> {
                             selectedPriority: _priorityIndex(
                               _controller.priority,
                             ),
+                            isPrivate: _controller.isPrivate,
                             onPriorityChanged: (val) =>
                                 _controller.setPriority(_priorityFromIndex(val)),
                             onCategoryChanged: (val) {
                               _controller.category.text = val;
                               _controller.setCategory(val);
                             },
+                            onPrivateChanged: _controller.setPrivate,
                           ),
                           const SizedBox(height: 24),
                           CreateGoalTypeCard(

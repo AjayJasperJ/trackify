@@ -7,12 +7,16 @@ import 'theme/app_theme.dart';
 import 'features/authentication/providers/auth_provider.dart';
 import 'features/onboarding/providers/onboarding_providers.dart';
 import 'core/presentation/screens/splash_screen.dart';
+import 'core/services/notification_scheduler.dart';
 
 class TrackifyApp extends ConsumerWidget {
   const TrackifyApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Start local notification scheduler on app launch
+    ref.watch(notificationSchedulerProvider);
+
     final authState = ref.watch(authStateProvider);
     final needsOnboarding = ref.watch(needsOnboardingProvider);
     

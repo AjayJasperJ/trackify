@@ -43,6 +43,7 @@ class AddTaskController extends ChangeNotifier {
   TaskPriority priority;
   double? numericTarget;
   String? numericUnit;
+  bool isPrivate;
   bool isLoading;
 
   AddTaskController({
@@ -89,6 +90,7 @@ class AddTaskController extends ChangeNotifier {
         priority = taskToEdit?.priority ?? TaskPriority.medium,
         numericTarget = taskToEdit?.numericTarget,
         numericUnit = taskToEdit?.numericUnit,
+        isPrivate = taskToEdit?.isPrivate ?? false,
         isLoading = false,
         taskId = taskToEdit?.taskId ??
             FirebaseFirestore.instance.collection('tasks').doc().id,
@@ -277,6 +279,11 @@ class AddTaskController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPrivate(bool v) {
+    isPrivate = v;
+    notifyListeners();
+  }
+
   void setLoading(bool v) {
     isLoading = v;
     notifyListeners();
@@ -303,10 +310,27 @@ class AddTaskController extends ChangeNotifier {
   // ── Persistence ─────────────────────────────────────────────────────────
 
   Future<void> save(String uid) async {
+    if (selectedMilestone != null) {
+      if (selectedGoal == null) {
+        throw ArgumentError("A goal must be selected if a milestone is selected.");
+      }
+      if (selectedMilestone!.goalId != selectedGoal!.goalId) {
+        throw ArgumentError("The selected milestone does not belong to the selected goal.");
+      }
+    }
     final now = DateTime.now();
     final validSubtasks = subtasks
         .where((s) => s.title.trim().isNotEmpty)
         .toList();
+
+    DateTime? calcEffectiveEndDate;
+    if (selectedMilestone?.deadline != null) {
+      calcEffectiveEndDate = selectedMilestone!.deadline;
+    } else if (selectedGoal?.targetDate != null) {
+      calcEffectiveEndDate = selectedGoal!.targetDate;
+    } else {
+      calcEffectiveEndDate = endDate;
+    }
 
     final task = TaskEntity(
       taskId: taskId,
@@ -331,6 +355,8 @@ class AddTaskController extends ChangeNotifier {
       priority: priority,
       numericTarget: trackingMode == TaskTrackingMode.numeric ? numericTarget : null,
       numericUnit: trackingMode == TaskTrackingMode.numeric ? numericUnit : null,
+      storedEffectiveEndDate: calcEffectiveEndDate,
+      isPrivate: isPrivate,
     );
 
     if (isEditing) {

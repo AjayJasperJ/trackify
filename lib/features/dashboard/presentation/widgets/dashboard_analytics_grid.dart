@@ -17,6 +17,7 @@ class DashboardAnalyticsGrid extends ConsumerWidget {
     final tasksDone =
         todayRecord?.completedTasks.values.where((t) => t.completed).length ?? 0;
     final dayStreak = progression?.currentStreak ?? 0;
+    final focusScore = progression?.focusScore ?? 0.0;
 
     return Row(
       spacing: 16,
@@ -35,6 +36,14 @@ class DashboardAnalyticsGrid extends ConsumerWidget {
             label: 'Momentum',
             value: '$dayStreak',
             subText: 'Day Streak',
+          ),
+        ),
+        Expanded(
+          child: _DashboardAnalyticsCard(
+            icon: Icons.psychology_outlined,
+            label: 'Focus',
+            value: '${focusScore.toInt()}%',
+            subText: 'Focus Score',
           ),
         ),
       ],
@@ -67,13 +76,12 @@ class _DashboardAnalyticsCard extends ConsumerWidget {
         ],
       ),
       child: Column(
-        spacing: 5,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            spacing: 5,
             children: [
               Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
@@ -84,27 +92,23 @@ class _DashboardAnalyticsCard extends ConsumerWidget {
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              const Text(
-                'Tasks',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subText,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
           ),
         ],
       ),

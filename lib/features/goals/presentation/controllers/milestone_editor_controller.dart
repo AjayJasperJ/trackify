@@ -76,7 +76,6 @@ class MilestoneEditorController extends ChangeNotifier {
       progress: original?.progress ?? 0.0,
       completed: original?.completed ?? false,
       // Preserve link data on edit
-      linkedTasks: original?.linkedTasks ?? const [],
       linkedTasksMeta: original?.linkedTasksMeta ?? const {},
       completionRule: completionRule,
       targetValue: int.tryParse(targetValue.text.trim()),

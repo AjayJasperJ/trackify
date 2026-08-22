@@ -43,11 +43,32 @@ Future<void> handleTaskCompletion({
   }
 
   final progressionService = ref.read(progressionServiceProvider);
+
+  double? moodReflectionLevel;
+  final todayRecord = ref.read(todayRecordStreamProvider).valueOrNull;
+  if (todayRecord != null) {
+    final completion = todayRecord.completedTasks[task.taskId];
+    if (completion?.reflection != null) {
+      final lvl = completion!.reflection!.level;
+      if (lvl == 'Very Low') {
+        moodReflectionLevel = 1.0;
+      } else if (lvl == 'Low') {
+        moodReflectionLevel = 2.0;
+      } else if (lvl == 'Normal') {
+        moodReflectionLevel = 3.0;
+      } else if (lvl == 'Good') {
+        moodReflectionLevel = 4.0;
+      } else if (lvl == 'Excellent') {
+        moodReflectionLevel = 5.0;
+      }
+    }
+  }
+
   await progressionService.processTaskCompletion(
         uid: uid,
-        taskId: task.taskId,
-        size: task.taskSize,
+        task: task,
         completedSubtasks: completedSubtaskCount,
+        moodReflectionLevel: moodReflectionLevel,
         isFirstTaskOfDay: false,
       );
 
@@ -63,7 +84,6 @@ Future<void> handleTaskCompletion({
   }
 
   int completedCount = 0;
-  final todayRecord = ref.read(todayRecordStreamProvider).valueOrNull;
   if (todayRecord != null) {
     completedCount = todayRecord.completedTasks.values
         .where((t) => t.completed)

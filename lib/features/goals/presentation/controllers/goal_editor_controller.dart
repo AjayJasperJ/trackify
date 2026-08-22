@@ -38,6 +38,7 @@ class GoalEditorController extends ChangeNotifier {
   String icon;
   List<MilestoneEntity> milestones;
   Set<String> selectedTaskIds;
+  bool isPrivate;
   bool isLoading;
 
   GoalEditorController({
@@ -71,6 +72,7 @@ class GoalEditorController extends ChangeNotifier {
         selectedTaskIds = goalToEdit == null
             ? <String>{}
             : goalToEdit.linkedTasks.toSet(),
+        isPrivate = goalToEdit?.isPrivate ?? false,
         isLoading = false,
         isEditing = goalToEdit != null,
         _originalCreatedAt = goalToEdit?.createdAt ?? DateTime.now(),
@@ -201,6 +203,11 @@ class GoalEditorController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setPrivate(bool v) {
+    isPrivate = v;
+    notifyListeners();
+  }
+
   // ── Persistence ─────────────────────────────────────────────────────────
 
   /// Persists the goal (+ any new milestones) and backfills `goalId` on every
@@ -270,6 +277,7 @@ class GoalEditorController extends ChangeNotifier {
       progress: _originalProgress,
       archived: _originalArchived,
       linkedTasks: selectedTaskIds.toList(),
+      isPrivate: isPrivate,
     );
 
     if (isEditing) {

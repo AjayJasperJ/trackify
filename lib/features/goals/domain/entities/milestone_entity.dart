@@ -74,7 +74,7 @@ class MilestoneEntity {
   final bool completed;
 
   /// Plain task-ID list — kept for Firestore `arrayContains` queries.
-  final List<String> linkedTasks;
+  List<String> get linkedTasks => linkedTasksMeta.keys.toList();
 
   /// Weighted metadata per task — keyed by taskId.
   final Map<String, LinkedTaskEntry> linkedTasksMeta;
@@ -95,7 +95,6 @@ class MilestoneEntity {
     required this.description,
     this.progress = 0.0,
     this.completed = false,
-    this.linkedTasks = const [],
     this.linkedTasksMeta = const {},
     this.completionRule = MilestoneCompletionRule.allTasks,
     this.targetValue,
@@ -146,7 +145,6 @@ class MilestoneEntity {
     String? description,
     double? progress,
     bool? completed,
-    List<String>? linkedTasks,
     Map<String, LinkedTaskEntry>? linkedTasksMeta,
     MilestoneCompletionRule? completionRule,
     int? targetValue,
@@ -162,7 +160,6 @@ class MilestoneEntity {
       description: description ?? this.description,
       progress: progress ?? this.progress,
       completed: completed ?? this.completed,
-      linkedTasks: linkedTasks ?? this.linkedTasks,
       linkedTasksMeta: linkedTasksMeta ?? this.linkedTasksMeta,
       completionRule: completionRule ?? this.completionRule,
       targetValue: targetValue ?? this.targetValue,
@@ -222,7 +219,6 @@ class MilestoneEntity {
       description: map['description'] ?? '',
       progress: (map['progress'] ?? 0.0).toDouble(),
       completed: map['completed'] ?? false,
-      linkedTasks: rawTasks,
       linkedTasksMeta: meta,
       completionRule:
           MilestoneCompletionRuleX.fromString(map['completionRule'] as String?),

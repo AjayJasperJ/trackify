@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'create_goal_section_card.dart';
 import '../../../../../theme/app_colors.dart';
 import '../../../../../theme/app_form_styles.dart';
+import '../../../../../theme/app_categories.dart';
 
 // ── Widget ─────────────────────────────────────────────────────────────────────
 class CreateGoalInfoCard extends StatelessWidget {
@@ -9,16 +10,20 @@ class CreateGoalInfoCard extends StatelessWidget {
   final TextEditingController descController;
   final TextEditingController categoryController;
   final int selectedPriority;
+  final bool isPrivate;
   final ValueChanged<int> onPriorityChanged;
   final ValueChanged<String> onCategoryChanged;
+  final ValueChanged<bool> onPrivateChanged;
   const CreateGoalInfoCard({
     super.key,
     required this.goalNameController,
     required this.descController,
     required this.categoryController,
     required this.selectedPriority,
+    required this.isPrivate,
     required this.onPriorityChanged,
     required this.onCategoryChanged,
+    required this.onPrivateChanged,
   });
 
   @override
@@ -46,17 +51,12 @@ class CreateGoalInfoCard extends StatelessWidget {
           children: [
             Expanded(
               child: DropdownButtonFormField<String>(
-                initialValue: const [
-                  'Professional',
-                  'Health',
-                  'Personal',
-                  'Finance'
-                ].contains(categoryController.text)
+                initialValue: AppCategories.values.contains(categoryController.text)
                     ? categoryController.text
-                    : 'Professional',
+                    : AppCategories.defaultCategory,
                 isExpanded: true,
                 decoration: AppFormStyles.input(label: 'Category'),
-                items: ['Professional', 'Health', 'Personal', 'Finance']
+                items: AppCategories.values
                     .map((e) =>
                         DropdownMenuItem(value: e, child: Text(e)))
                     .toList(),
@@ -100,6 +100,41 @@ class CreateGoalInfoCard extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 20),
+        // Private Switch Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Private Goal',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppFormStyles.textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Friends cannot see this goal or its tasks',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: isPrivate,
+              onChanged: onPrivateChanged,
+              activeThumbColor: AppColors.primary,
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -125,25 +160,50 @@ class CreateGoalInfoCard extends StatelessWidget {
 
   Widget _buildPriorityBtn(String text, int index) {
     final isSelected = selectedPriority == index;
+
+    final Color selectedBgColor = switch (index) {
+      0 => const Color(0xFF107C10).withValues(alpha: 0.12), // Low (Soft Green)
+      1 => const Color(0xFFD97706).withValues(alpha: 0.12), // Med (Soft Amber)
+      2 => const Color(0xFFDC2626).withValues(alpha: 0.12), // High (Soft Red)
+      _ => const Color(0xFF8B5CF6).withValues(alpha: 0.12), // Crit (Soft Purple)
+    };
+
+    final Color selectedTextColor = switch (index) {
+      0 => const Color(0xFF107C10),
+      1 => const Color(0xFFD97706),
+      2 => const Color(0xFFDC2626),
+      _ => const Color(0xFF8B5CF6),
+    };
+
+    final Color selectedBorderColor = switch (index) {
+      0 => const Color(0xFF107C10).withValues(alpha: 0.4),
+      1 => const Color(0xFFD97706).withValues(alpha: 0.4),
+      2 => const Color(0xFFDC2626).withValues(alpha: 0.4),
+      _ => const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+    };
+
     return Expanded(
       child: GestureDetector(
         onTap: () => onPriorityChanged(index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.surfaceContainerHighest
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? selectedBgColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? selectedBorderColor : Colors.transparent,
+              width: 1,
+            ),
           ),
           child: Center(
             child: Text(
               text,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected
-                    ? AppColors.onSurface
+                    ? selectedTextColor
                     : AppColors.onSurfaceVariant,
               ),
             ),

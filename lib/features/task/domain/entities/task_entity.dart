@@ -29,6 +29,8 @@ class TaskEntity {
   final TaskPriority priority;
   final double? numericTarget;
   final String? numericUnit;
+  final DateTime? storedEffectiveEndDate;
+  final bool isPrivate;
 
   /// The linked goal's target date / milestone's deadline — resolved by
   /// providers (task_state_providers) from the goals/milestones streams.
@@ -60,6 +62,8 @@ class TaskEntity {
     this.priority = TaskPriority.none,
     this.numericTarget,
     this.numericUnit,
+    this.storedEffectiveEndDate,
+    this.isPrivate = false,
   });
 
   /// Effective expiry for a linked task:
@@ -73,7 +77,7 @@ class TaskEntity {
   DateTime? get effectiveEndDate {
     if (linkedMilestoneDeadline != null) return linkedMilestoneDeadline;
     if (linkedGoalTargetDate != null) return linkedGoalTargetDate;
-    return endDate;
+    return storedEffectiveEndDate ?? endDate;
   }
 
   /// A linked task expires when its goal or milestone is completed, or when
@@ -156,6 +160,12 @@ class TaskEntity {
       priority: parsePriority(map['priority']),
       numericTarget: map['numericTarget'] != null ? ModelParse.toDouble(map['numericTarget']) : null,
       numericUnit: map['numericUnit'] != null ? ModelParse.toStr(map['numericUnit']) : null,
+      storedEffectiveEndDate: map['effectiveEndDate'] != null
+          ? (map['effectiveEndDate'] is Timestamp
+                ? (map['effectiveEndDate'] as Timestamp).toDate()
+                : ModelParse.toDateNull(map['effectiveEndDate']))
+          : null,
+      isPrivate: map['isPrivate'] != null ? ModelParse.toBool(map['isPrivate']) : false,
     );
   }
 
@@ -181,6 +191,8 @@ class TaskEntity {
       'priority': priority.name,
       'numericTarget': numericTarget,
       'numericUnit': numericUnit,
+      'effectiveEndDate': storedEffectiveEndDate?.toIso8601String() ?? effectiveEndDate?.toIso8601String(),
+      'isPrivate': isPrivate,
     };
   }
 
@@ -206,6 +218,8 @@ class TaskEntity {
     TaskPriority? priority,
     double? numericTarget,
     String? numericUnit,
+    DateTime? storedEffectiveEndDate,
+    bool? isPrivate,
   }) {
     return TaskEntity(
       taskId: taskId ?? this.taskId,
@@ -229,6 +243,8 @@ class TaskEntity {
       priority: priority ?? this.priority,
       numericTarget: numericTarget ?? this.numericTarget,
       numericUnit: numericUnit ?? this.numericUnit,
+      storedEffectiveEndDate: storedEffectiveEndDate ?? this.storedEffectiveEndDate,
+      isPrivate: isPrivate ?? this.isPrivate,
     );
   }
 }

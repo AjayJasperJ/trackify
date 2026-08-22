@@ -23,14 +23,83 @@ class MilestoneRepositoryImpl implements MilestoneRepository {
 
   @override
   Future<void> updateMilestone(String uid, MilestoneEntity milestone) async {
-    await _firestore
+    // 1. Get the current milestone state from DB to check if deadline changed
+    final currentMsSnap = await _firestore
         .collection('users')
         .doc(uid)
         .collection('goals')
         .doc(milestone.goalId)
         .collection('milestones')
         .doc(milestone.milestoneId)
-        .update(milestone.toMap());
+        .get();
+        
+    DateTime? oldDeadline;
+    bool becameCompleted = false;
+    if (currentMsSnap.exists && currentMsSnap.data() != null) {
+      final data = currentMsSnap.data()!;
+      oldDeadline = data['deadline'] != null ? DateTime.parse(data['deadline']) : null;
+      final oldCompleted = data['completed'] as bool? ?? false;
+      if (milestone.completed && !oldCompleted) {
+        becameCompleted = true;
+      }
+    }
+
+    final batch = _firestore.batch();
+    batch.update(
+      _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('goals')
+          .doc(milestone.goalId)
+          .collection('milestones')
+          .doc(milestone.milestoneId),
+      milestone.toMap(),
+    );
+
+    // If milestone became completed, archive all linked tasks
+    if (becameCompleted && currentMsSnap.exists && currentMsSnap.data() != null) {
+      final data = currentMsSnap.data()!;
+      final linkedTasks = List<String>.from(data['linkedTasks'] ?? []);
+      for (final taskId in linkedTasks) {
+        batch.update(
+          _firestore.collection('users').doc(uid).collection('tasks').doc(taskId),
+          {'isArchived': true},
+        );
+      }
+    }
+
+    // If deadline changed, cascade update to tasks linked to this milestone
+    if (milestone.deadline != oldDeadline) {
+      final tasksSnapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('tasks')
+          .where('milestoneId', isEqualTo: milestone.milestoneId)
+          .get();
+
+      for (var doc in tasksSnapshot.docs) {
+        final taskData = doc.data();
+        DateTime? calcEffectiveEndDate = milestone.deadline;
+
+        if (calcEffectiveEndDate == null) {
+          // Fallback to goal's targetDate
+          final goalSnap = await _firestore.collection('users').doc(uid).collection('goals').doc(milestone.goalId).get();
+          if (goalSnap.exists && goalSnap.data() != null) {
+            final goalData = goalSnap.data()!;
+            calcEffectiveEndDate = goalData['targetDate'] != null ? DateTime.parse(goalData['targetDate']) : null;
+          }
+        }
+
+        // Fallback to task's own endDate
+        calcEffectiveEndDate ??= taskData['endDate'] != null ? DateTime.parse(taskData['endDate']) : null;
+
+        batch.update(doc.reference, {
+          'effectiveEndDate': calcEffectiveEndDate?.toIso8601String(),
+        });
+      }
+    }
+
+    await batch.commit();
   }
 
   @override
@@ -187,10 +256,41 @@ class MilestoneRepositoryImpl implements MilestoneRepository {
         .collection('milestones')
         .doc(milestoneId);
 
+    final goalRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('goals')
+        .doc(goalId);
+
+    // Read milestone references before transaction
+    final milestonesSnap = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('goals')
+        .doc(goalId)
+        .collection('milestones')
+        .get();
+
+    final milestoneRefs = milestonesSnap.docs.map((doc) => doc.reference).toList();
+
     await _firestore.runTransaction((transaction) async {
       final snap = await transaction.get(docRef);
       if (!snap.exists) return;
       final data = snap.data()!;
+
+      final goalSnap = await transaction.get(goalRef);
+      if (!goalSnap.exists) return;
+      final goalData = goalSnap.data()!;
+
+      // Fetch other milestone documents transactionally
+      final List<DocumentSnapshot> milestoneSnaps = [];
+      for (final ref in milestoneRefs) {
+        if (ref.id == milestoneId) {
+          milestoneSnaps.add(snap);
+        } else {
+          milestoneSnaps.add(await transaction.get(ref));
+        }
+      }
 
       // Read current meta; if this task isn't linked, ignore the update.
       final rawMeta = data['linkedTasksMeta'];
@@ -240,12 +340,52 @@ class MilestoneRepositoryImpl implements MilestoneRepository {
         newCompleted = linkedTasks.isNotEmpty && doneCount >= linkedTasks.length;
       }
 
+      final wasCompleted = data['completed'] as bool? ?? false;
+      if (newCompleted && !wasCompleted) {
+        for (final taskId in linkedTasks) {
+          final taskRef = _firestore.collection('users').doc(uid).collection('tasks').doc(taskId);
+          transaction.update(taskRef, {'isArchived': true});
+        }
+      }
+
       transaction.update(docRef, {
         'linkedTasksMeta': meta,
         'currentValue': currentValue,
         'progress': newProgress,
         'completed': newCompleted,
         'completedAt': newCompleted ? DateTime.now().toIso8601String() : null,
+      });
+
+      // Calculate parent goal progress
+      int completedMilestones = 0;
+      for (final msSnap in milestoneSnaps) {
+        if (!msSnap.exists) continue;
+        final msData = msSnap.data() as Map<String, dynamic>? ?? {};
+        final isCompleted = msSnap.id == milestoneId ? newCompleted : (msData['completed'] as bool? ?? false);
+        if (isCompleted) {
+          completedMilestones++;
+        }
+      }
+
+      final double newGoalProgress = milestoneRefs.isEmpty ? 0.0 : completedMilestones / milestoneRefs.length;
+      
+      String newGoalStatus = goalData['status'] ?? 'notStarted';
+      if (newGoalProgress == 1.0) {
+        newGoalStatus = 'completed';
+      } else if (newGoalProgress > 0.0) {
+        if (newGoalStatus == 'notStarted') {
+          newGoalStatus = 'active';
+        }
+      } else {
+        if (newGoalStatus == 'completed' || newGoalStatus == 'active') {
+          newGoalStatus = 'notStarted';
+        }
+      }
+
+      transaction.update(goalRef, {
+        'progress': newGoalProgress,
+        'status': newGoalStatus,
+        'updatedAt': DateTime.now().toIso8601String(),
       });
     });
   }

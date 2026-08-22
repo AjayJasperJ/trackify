@@ -8,8 +8,8 @@ import 'app_colors.dart';
 class AppFormStyles {
   AppFormStyles._();
 
-  static const double cardRadius = 12;
-  static const double inputRadius = 12;
+  static const double cardRadius = 16;
+  static const double inputRadius = 16;
 
   /// Text color used inside form inputs.
   static const Color textColor = AppColors.onSurface;
@@ -24,27 +24,30 @@ class AppFormStyles {
   static const Color outline = AppColors.outline;
   static const Color outlineVariant = AppColors.outlineVariant;
 
-  /// Standard card: white, rounded-12, hairline border, soft shadow.
-  static BoxDecoration card({
-    Color? color,
-    Color? borderColor,
-  }) {
+  /// Standard card: white, rounded-16, hairline border, soft shadow.
+  static BoxDecoration card({Color? color, Color? borderColor}) {
     return BoxDecoration(
       color: color ?? AppColors.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(cardRadius),
       border: Border.all(
-        color: borderColor ?? AppColors.outlineVariant.withValues(alpha: 0.3),
+        color: borderColor ?? AppColors.outlineVariant.withValues(alpha: 0.15),
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          blurRadius: 2,
+          color: Colors.black.withValues(alpha: 0.02),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.03),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
         ),
       ],
     );
   }
 
-  /// Standard input decoration: filled, rounded-12, subtle border,
+  /// Standard input decoration: filled, rounded-16, subtle border,
   /// primary border on focus. Shared by TextFormField,
   /// DropdownButtonFormField and InputDecorator.
   static InputDecoration input({
@@ -75,7 +78,7 @@ class AppFormStyles {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(inputRadius),
         borderSide: BorderSide(
-          color: AppColors.outlineVariant.withValues(alpha: 0.3),
+          color: AppColors.outlineVariant.withValues(alpha: 0.15),
         ),
       ),
       focusedBorder: OutlineInputBorder(
